@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head><script src="https://d3js.org/d3.v4.min.js"></script>
+</head>
+
+<body>
+
+<script>
+
+var list = [
+{name:"John", sex: "M"},
+{name:"Peter", sex: "M"},
+{name:"John", sex: "M"},
+{name:"John", sex: "F"},
+{name:"Andy", sex: "M"}
+];
+
+var list = 
+	{
+		2015:{name:"John", sex: "M"},
+		2014:{name:"Peter", sex: "M"},
+		2011:{name:"John", sex: "M"}
+	}
+;
+console.log(list);
+
+// 
+// returns a dictionary with using d.name as the keys( with the $ sign appended )
+// So returns...a dictionary of this structure
+//  { 
+//	"$John" : {name:"John", sex: "F"}
+//	"$Peter" : {name:"Peter", sex: "M"}
+//	"$Andy" : {name:"Andy", sex: "M"}
+// }
+//var a = d3.map( list, function (d){return d.name} );  
+var a = list.map( function (d, i, arr){console.log(i);console.log(arr);return d.name} )
+//var a = d3.map( list );  
+console.log(a);
+
+
+console.log(a.$Peter);
+console.log(a.$Peter.name);
+
+//
+// returns a list of keys
+//  ["John", "Peter", "Andy"]
+
+console.log( a.keys());
+
+//
+// returns a list of the values
+//  
+
+console.log(a.values());
+
+
+console.log(a.entries());
+
+
+
+
+
+
+
+</script>
+
+</body>
+</html>

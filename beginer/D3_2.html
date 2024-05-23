@@ -1,0 +1,47 @@
+<html>
+<head>
+	<!--<script type="text/javascript" src="http://d3js.org/d3.v3.min.js"></script>-->
+	<script type="text/javascript" src="https://d3js.org/d3.v4.js"></script> 
+</head>
+
+<body>
+<script>
+	var theData = [ 
+		{"r":"80", "fill":"#ff0000"},
+		{"r":"40", "fill":"#00ff00"},
+		{"r":"10", "fill":"#0000ff"}
+	];
+	//
+	// creating the SVG tag
+	//
+	svg = d3.select('body').append('svg')
+		.attr("width", "200")
+		.attr("height", "200");
+	//
+	// Creating virtual placeholders and bind the data
+	//
+	var cir = svg.selectAll( "circle" ) // create virtual placeholders in memory for the DOM elements that are not created yet!
+		.data( theData )		// bind the data array elements to the empty selections
+		.enter()				// enter() returns reference placeholders for each missing DOM element
+	//
+	// create the DOM element
+	//
+	cir.append("circle")	// append()  creates DOM element for each reference placeholders that was previously instantiated by last enter() method
+		.attr("cx", "100")
+		.attr("cy", "100")
+		.attr( "r", function (d) { return d.r ;} )
+		.style( "fill", function (d) { return d.fill ;} )
+	
+	
+	
+
+
+</script>
+
+
+
+
+
+</body>
+
+</html>

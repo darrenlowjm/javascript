@@ -1,0 +1,59 @@
+
+<html>
+  <head>
+    <title>D3 Example</title>
+    <script src="https://d3js.org/d3.v4.js"></script>
+    
+   
+  </head>
+  <body>
+
+    <script>
+
+      var data = [1, 2, 3, 4, 5];
+
+      var scale1 = d3.scaleLinear()
+        .domain([1, 10])   // Data space
+        .range([0, 400]); // Pixel space
+
+      var svg = d3.select("body").append("svg")
+        .attr("width",  250)
+        .attr("height", 250);
+
+	function render( thedata, color ) {
+		// Data bind
+	      var rects = svg.selectAll( "rect" ).data( thedata );
+	      
+	      // Hnadle those data element that not attached to DOM yet
+	      // 
+	      var ent = rects.enter().append("rect")
+		.attr("y", 50)
+		.attr("width",  20)	
+		.attr("height", 20);
+		// update all
+		// 
+		rects.merge( ent )	// merge ent with existing dataDoms
+		.attr("x", scale1)		
+		.style("fill", color);
+		
+		
+		// remove
+		rects.exit().remove();
+	}
+	
+	//render1( [1, 2, 5  ], "black" );
+	setTimeout( function (){render( [1, 2  ], "red");}, 10  );
+	
+	setTimeout( function (){render( [3, 4 ], "blue");}, 1000  );	
+	setTimeout( function (){render( [5,6 ], "pink");}, 2000  );	
+	
+	//~ setTimeout( function (){render1( [1, 2.5 ], "yellow");}, 3000  );	
+	
+	//setTimeout( function (){render1( [1, 2, 3 ], "yellow");}, 1000  );	
+	//setTimeout( function (){render0( [4 ], "blue");}, 3000  );	
+	
+	
+    </script>
+
+  </body>
+</html>

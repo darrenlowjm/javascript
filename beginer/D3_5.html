@@ -1,0 +1,39 @@
+<html>
+  <head>
+    <title>D3 Example</title>
+    <script type="text/javascript" src="https://d3js.org/d3.v4.js"></script> 
+   
+    
+  </head>
+  <body>
+
+    <script>
+    
+	function type( d ){
+		d.color = d.color + " " + "darren";
+		d.size = +d.size + 1000;
+		return d;
+	}
+	/*
+	d3.csv( "text1.csv", 
+		type, 
+		function (theWholeArrayOfObjs) {
+			theWholeArrayOfObjs.forEach( function (d){ 
+				console.log( d.color + " and " + d.size ) } 
+			) } 
+		);
+	*/
+	
+    	var a;
+	//d3.csv( "text1.csv", type,  function (theWholeArrayOfObjs) { var a = theWholeArrayOfObjs.slice(); console.log( a ); }  	);
+	
+	d3.csv( "text1.csv", type,  function (theWholeArrayOfObjs) {  a =  theWholeArrayOfObjs } 	);
+
+
+	window.setTimeout(function (){console.log(a)} ,1000);
+	 
+	 
+    </script>
+
+  </body>
+</html>

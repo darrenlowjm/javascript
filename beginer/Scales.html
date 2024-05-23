@@ -1,0 +1,321 @@
+<html>
+<head>
+    <title>D3 Example</title>
+    <script type="text/javascript" src="https://d3js.org/d3.v4.js"></script> 
+    <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script> 
+<style>
+    	div.heading {
+		font-size: 2.5em;				
+	}
+</style>
+    
+</head>
+ <body>
+	<div class="heading">Linear scales</div>
+	<svg class="linear" width=500 height=100 style="border: 1px solid black"><text x=10 y=20>Linear scale</text></svg><br><br>
+	<svg class="linear_interpolator" width=500 height=100 style="border: 1px solid black"><text x=10 y=20>Linear scale with interpolator</text></svg><br><br>
+	<svg class="linear_time" width=700 height=100 style="border: 1px solid black"><text x=10 y=20>Linear time scale</text></svg><br><br>
+	
+	<div class="heading">Sequential scales</div>
+	<svg class="sequential" width=1000 height=150 style="border: 1px solid black"><text x=10 y=20>Sequential scale</text>
+		<g class="seq1" transform="translate(0,30)" />
+		<g class="seq2" transform="translate(0,60)" />
+		<g class="seq3" transform="translate(0,90)" />
+	</svg><br><br>
+	
+	<div class="heading">Quantize scales</div>
+	<svg class="quantize" width=1000 height=150 style="border: 1px solid black"><text x=10 y=20>Quantize scale :  need to explicitly include the addition color module https://d3js.org/d3-scale-chromatic.v1.min.js</text>
+	</svg><br><br>
+	
+	<div class="heading">Ordinal scales</div>
+	<svg class="ordinal" width=1000 height=150 style="border: 1px solid black">
+	<text x=10 y=20>Ordinal scale:  need to explicitly include the addition color module https://d3js.org/d3-scale-chromatic.v1.min.js</text>
+	<text x=10 y=40>first elem in domain is mapped to first elem in range. If domain more elems,then it wil reuse elems from the start of the range.</text>
+	<text x=10 y=60>Setting the domain in ordinal scale is optional. </text>
+	</svg><br><br>
+	
+	<div class="heading">Category scales</div>
+	<svg width=1000 height=250 style="border: 1px solid black"><g class="band" transform="translate(30,50)" />
+	<text x=10 y=20>scaleBand</text>
+	
+	</svg><br><br>
+
+<script>	
+var dataset = [  10.58, 51 ];
+// -------------------------------------------------
+// A Linear scale
+// -------------------------------------------------
+var x = d3.scaleLinear()
+	.domain( d3.extent(dataset, function(d){return d;}) )
+	.range( [0,300] )
+	.clamp(true)
+	.nice()
+	;	
+	
+var axis = d3.axisBottom( x )
+	//.ticks(5)
+	;
+
+d3.select(".linear").append("g").attr("class", "linearG").attr("transform", "translate(30,50)")
+	.call( axis  );
+	
+d3.select(".linearG").append("circle")
+	.attr("cx", x(35))
+	.attr("r", 10)	
+	.attr("fill", "blue")
+	.attr("fill-opacity", 0.5);
+
+d3.select(".linearG").append("circle")
+	.attr("cx", x(50))
+	.attr("r", 10)	
+	.attr("fill", "blue")
+	.attr("fill-opacity", 0.5);
+</script>	
+
+<script>	
+// -------------------------------------------------
+// A Linear scale with interpolator
+// -------------------------------------------------
+var dataset = [  10, 20,30,40,50,60,70,80,90,100,110,120,130,140 ];
+var x = d3.scaleLinear()
+	.domain( d3.extent(dataset, function(d){return d;}) )
+	.range( ["red","white"] )
+	//.interpolate(d3.interpolateCubehelix)
+	.interpolate(d3.interpolateHcl)	
+	;	
+	
+d3.select(".linear_interpolator").selectAll("rect").data(dataset)	
+	.enter()
+	.append("rect")
+	.attr("x", function(d){return d} )
+	.attr("y", 40)
+	.attr("width", 10 )
+	.attr("height", 20)
+	.attr("stroke", "black")
+	.attr("fill",  function(d){ return x(d)})
+	;	
+</script>	
+	
+<script>	
+// -------------------------------------------------
+// A time scale 
+// ------------------------------------------------
+var dataset = [  10, 20,30,40,50,60,70,80,90,100,110,120,130,140 ];
+var s1 = "7 nov 2016 10:05";
+var s2 = "7 nov 2017 00:01";
+var toData = d3.timeParse("%e %b %Y %H:%M");
+var mindate = toData(s1);
+var maxdate = toData(s2);
+
+
+var x = d3.scaleTime()
+	.domain( [mindate, maxdate] )
+	.range( [0,500] )
+	.nice()
+	;	
+	
+var axis = d3.axisBottom( x )
+	//.ticks(5)
+	//.tickFormat( d3.timeFormat("%b-%Y") )
+	.tickFormat( d3.timeFormat("%b : %Y") )
+	;
+
+d3.select(".linear_time").append("g").attr("class", "linear_timeG").attr("transform", "translate(30,50)").style("font-size", 10)
+	.call( axis  );
+
+d3.selectAll(".linear_timeG text").attr("transform", "translate(-20,10)rotate(-45)")
+	
+d3.select(".linear_timeG").append("circle")
+	.attr("cx", x( toData("9 mar 2017") ))
+	.attr("r", 10)	
+	.attr("fill", "blue")
+	.attr("fill-opacity", 0.5);
+d3.select(".linear_timeG").append("circle")
+	.attr("cx", x( toData("17 aug 2017") ))
+	.attr("r", 10)	
+	.attr("fill", "green")
+	.attr("fill-opacity", 0.5);	
+</script>	
+
+<script>	
+// -------------------------------------------------
+// A Sequental scale
+// -------------------------------------------------
+var dataset = [  10, 20,30,40,50,60,70,80,90,100,110,120,130,140 ];
+var x = d3.scaleSequential()
+	.domain( d3.extent(dataset, function(d){return d;}) )
+	.interpolator(d3.interpolateViridis)
+	;	
+	
+d3.select(".seq1").selectAll("rect").data(dataset)	
+	.enter()
+	.append("rect")
+	.attr("x", function(d,i){return i*20+ 5} )
+	.attr("y", 0)
+	.attr("width", 20 )
+	.attr("height", 20)
+	.attr("stroke", "black")
+	.attr("fill",  function(d){ return x(d)})
+	;	
+	
+x.interpolator(d3.interpolateInferno);
+d3.select(".seq2").selectAll("rect").data(dataset)	
+	.enter()
+	.append("rect")
+	.attr("x", function(d,i){return i*20+ 5} )
+	.attr("y", 0)
+	.attr("width", 20 )
+	.attr("height", 20)
+	.attr("stroke", "black")
+	.attr("fill",  function(d){ return x(d)})
+	;	
+	
+x.interpolator(d3.interpolateRainbow);
+d3.select(".seq3").selectAll("rect").data(dataset)	
+	.enter()
+	.append("rect")
+	.attr("x", function(d,i){return i*20+ 5} )
+	.attr("y", 0)
+	.attr("width", 20 )
+	.attr("height", 20)
+	.attr("stroke", "black")
+	.attr("fill",  function(d){ return x(d)})
+	;		
+</script>	
+
+<script>	
+// -------------------------------------------------
+// A Quantize scale
+// -------------------------------------------------
+var dataset = [  0, 20,30,40,50,60,70,80,90,100];
+
+var x = d3.scaleQuantize()
+	.domain( d3.extent(dataset))
+	//.range(d3.schemeCategory10)
+	//.range(d3.schemeDark2)
+	.range(d3.schemeSet1)
+	;
+
+d3.select(".quantize").selectAll("rect").data(dataset)	
+	.enter()
+	.append("rect")
+	.attr("x", function(d,i){return i*25 } )
+	.attr("y", 40)
+	.attr("width", 20 )
+	.attr("height", 20)
+	.attr("stroke", "black")
+	.attr("fill",  function(d){ return x(d)})
+	;	
+</script>	
+<script>	
+// -------------------------------------------------
+// A Ordinal scale
+// -------------------------------------------------
+var dataset = [  80, 80,30,0,0,0,70,80,90,100,80, 80,30,40,50,60,70,120];
+//var dataset = [  80, 80,30,40,50,80];
+//var dataset = [  80, 80,80,80,80,81];
+
+var x = d3.scaleOrdinal()
+	//.domain( dataset )
+	//.range(d3.schemeCategory10)
+	.range(d3.schemeDark2)	
+	;
+
+var sel = d3.select(".ordinal").selectAll("rect").data(dataset)	
+	.enter();
+	
+	sel.each( function(d,i){
+			d3.select(this).append("rect")
+				.attr("x", i*25  )
+				.attr("y", 80)
+				.attr("width", 20 )
+				.attr("height", 20)
+				.style("stroke", "black")
+				.style("fill",  x(d))
+				;	
+			d3.select(this).append("text")
+				.attr("x", i*25  )
+				.attr("y", 120)
+				.style("stroke", "black")
+				.style("font-size", "10")
+				.text(d)
+				;
+		}	
+	);
+</script>	
+	
+<script>	
+// -------------------------------------------------
+// A Band scale
+// -------------------------------------------------
+var dataset = [  80, 80,30,0,0,0,70,80,90,100,80, 80,30,40,50,60,70,120];
+//var dataset = [  80, 80,30,40,50,80];
+//var dataset = [  80, 80,80,80,80,81];
+
+var x = d3.scaleBand()
+	.domain( dataset )
+	//.range(d3.schemeCategory10)
+	.range([0,700])	
+	;
+
+var axis = d3.axisBottom( x )	;
+
+d3.select(".band").append("g").attr("class", "bangG").attr("transform", "translate(0,50)").style("font-size", 10)
+	.call( axis  );
+
+ d3.select(".band").selectAll("rect").data(dataset)	
+	.enter()		
+		.append("rect")
+		.attr("x", function(d){return x(d)}  )
+		.attr("y", 10)
+		.attr("width", x.bandwidth() )
+		.attr("height", 20)
+		.style("stroke", "black")
+		.style("fill", "green")
+		;	
+	
+</script>	
+<script>	
+// -------------------------------------------------
+// A point scale
+// -------------------------------------------------
+var dataset = [  80, 80,30,0,0,0,70,80,90,100,80, 80,30,40,50,60,70,120];
+//var dataset = [  80, 80,30,40,50,80];
+//var dataset = [  80, 80,80,80,80,81];
+
+var x = d3.scalePoint()
+	.domain( dataset )
+	//.range(d3.schemeCategory10)
+	.range([0,700])	
+	;
+
+var axis = d3.axisBottom( x )	;
+
+d3.select(".band").append("g").attr("class", "pointG").attr("transform", "translate(0,120)").style("font-size", 10)
+	.call( axis  );
+
+ d3.select(".band").selectAll("circle").data(dataset)	
+	.enter()		
+		.append("circle")
+		.attr("cx", function(d){return x(d)}  )
+		.attr("cy", 120)
+		.attr("r", 10)
+		.style("stroke", "black")
+		.style("fill", "green")
+		.style("fill-opacity", 0.4)
+		;	
+	
+</script>	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+</body>
+</html>

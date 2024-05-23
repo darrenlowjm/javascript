@@ -1,0 +1,82 @@
+<body>
+<script src="https://d3js.org/d3.v4.js"></script>
+
+<script>
+var nested = 
+[			{   "key"	: "0-4 years",
+			     "values" 	: 
+				[	
+					{// elem0
+						"key" : "1960", 
+						"values" : [	
+							{ "year": "1960","resident":"chinese", "age":"0-4", "population":"12000" },
+							{ "year": "1960","resident":"malay", "age":"0-4", "population":"12000"},
+							{ "year": "1960","resident":"indian", "age":"0-4", "population":"12000" },
+							{ "year": "1960","resident":"others", "age":"0-4", "population":"12000" }		]
+					},	
+					{// elem1
+						"key" : "1961", 
+						"values" : [	
+							{ "year": "1960","resident":"chinese", "age":"0-4", "population":"12000" },
+							{ "year": "1960","resident":"malay", "age":"0-4", "population":"12000" },
+							{ "year": "1960","resident":"indian", "age":"0-4", "population":"12000" },
+							{ "year": "1960","resident":"others", "age":"0-4", "population":"12000" }		]
+					}				
+				]//end of values array
+			},
+
+			{   "key"	: "5-9 years",
+			     "values" 	:
+				[	
+					{// elem0
+						"key" : "1960", 
+						"values" : [	
+							{ "year": "1960","resident":"chinese", "age":"0-4", "population":"12000" },
+							{ "year": "1960","resident":"malay", "age":"0-4", "population":"12000" },
+							{ "year": "1960","resident":"indian", "age":"0-4", "population":"12000" },
+							{ "year": "1960","resident":"others", "age":"0-4", "population":"12000" }		]
+					}				
+				]//end of values array
+			}
+
+
+
+
+];
+</script>
+
+<script>
+
+var filename = "singapore-residents-by-age-group-ethnic-group-and-sex-end-june-annual.csv";
+
+function preformat(d){		
+		if( d.age.search("Over") == -1 ){return null;}	// remove the "& over rows"
+		d.population = Number.isFinite(+d.population)  ? +d.population : 0 ;				
+		return d;		
+}	
+
+d3.csv(filename, preformat, function(dataset){
+
+	//~ var nested_dataset = d3.nest()
+		//~ .key( function(d){return d.age} )
+		//~ .key( function(d){return d.year} )
+		//~ .entries(dataset);
+		
+		
+		
+	console.log(dataset);
+	console.log("hui");
+		
+		
+		
+		
+}
+);	//end of open file
+
+
+
+
+
+</script>
+
+</body>

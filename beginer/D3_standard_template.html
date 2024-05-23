@@ -1,0 +1,140 @@
+<html>
+<head>
+    <title>D3 Example</title>
+    <script type="text/javascript" src="https://d3js.org/d3.v4.js"></script> 
+    <!-- <script src="https://d3js.org/d3.v4.min.js"></script> -->
+    <style>
+	.axis {
+		shape-rendering: crispEdges;
+	}
+	svg {
+		border: 1px solid yellow; 
+	}
+	code {
+		color: blue;
+	}
+	body {
+		font-size: 1.15em;
+		font-family: "Times New Roman";			
+	}	
+	a {
+		text-decoration: underline;
+		color: blue;
+	}
+	.labels {
+		font-size: 0.8em;
+		font-family: serif;
+		fill: #33cc33;
+	}
+	div.heading {
+		font-size: 2.5em;
+		font-family: "Times New Roman";	
+		width:1300px; 
+		text-align:center;
+		margin:auto; 
+		border: 1px dotted green; 
+	}
+	div.content {
+		margin:auto; 
+		width:1300px; 
+		text-align:center;
+		border: 1px dotted pink; 	
+		height: 800px;				
+	}
+	div.chart {
+		margin:auto; 
+		width:900px; 
+		text-align:center;
+		border: 1px dotted blue; 
+	}
+	div.content2 {
+		margin:auto; 
+		width:1300px; 
+		clear:left;
+		text-align:center;
+		border: 1px solid black; 
+	}
+	div.footer {
+		margin:auto; 
+		width:1300px; 
+		clear:left;
+		text-align:center;
+		font-size: 0.8em;
+		border: 1px solid purple; 
+	}
+
+
+
+    </style>
+</head>
+ <body>
+	<div class='heading'>My chart title goes here...</div>
+	<br>
+	
+	<div class="content">
+		<div class="chart"></div>
+	</div>
+	
+	<br>
+
+	
+	<script>
+	// -----------------------------------------------------------------------------
+	// User defined constants
+	// -----------------------------------------------------------------------------
+	//
+	var sizeSvg 	= { wt:800, ht:500 };
+	var sizeChart 	= { wt:700, ht:280 };		
+	//
+	// calculated based on above settings
+	//
+	var margin 	= { 
+		left: (sizeSvg.wt - sizeChart.wt)/2 , 
+		top: (sizeSvg.ht - sizeChart.ht)/2 
+	};	
+	// create the svg element <svg><g>
+	 var svg = d3.select("div.chart").append("svg")
+		.attr( "width",  sizeSvg.wt )
+		.attr( "height",  sizeSvg.ht ) ;
+	//
+	var chartG = svg.append("g").attr("class", "chartG").attr( "transform", "translate(" + margin.left + "," + margin.top + ")" );	
+	
+	
+	
+		
+	// create x axis scale
+	
+	
+	// create y axis scale
+		
+
+	
+	
+	
+	
+	// create the chart
+
+	
+	</script>
+
+
+	<!--  Body text goes here -->
+	<!--  Body text goes here -->
+
+	<br>
+
+<div class="content2">Some descriptions here...</div>
+
+<div class="footer">
+<p style="text-decoration:underline">Conditions of use:</p>
+ Datasets downloaded from https://data.gov.sg/dataset/attendances-at-cinemas-and-visitors-to-places-of-interest-monthly on Oct 2016.
+<br>
+ Any analysis or transformation of data made here shall not be attributed to the Singapore Government or its Statutory Boards.
+ <br> 
+The datasets provided by the Singapore Government and its Statutory Boards via Data.gov.sg are governed by the Terms of Use available at https://data.gov.sg/site-terms. 
+To the fullest extent permitted by law, the Singapore Government and its Statutory Boards are not liable for any damage or loss of any kind caused directly 
+or indirectly by the use of the datasets or any derived analyses or applications.
+</div>
+
+  </body>
+</html>

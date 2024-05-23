@@ -1,0 +1,96 @@
+<html>
+<head>
+<title>Simple SVG example</title>
+
+<script>
+	function change(id){
+		document.getElementById( id ).setAttribute( 'fill', '#000000' );
+		document.getElementById( id ).setAttribute( 'stroke', '#000000' );
+	}
+	function changeAttributeFor( id ){
+		//console.log(id);
+		document.getElementById( id ).setAttribute( 'fill', '#ffff4d' );
+		document.getElementById( id ).setAttribute( 'stroke', '#ffff4d' );
+		setTimeout(  function () { change(id); }    ,5000 );
+	}	
+</script>
+<style>
+	textarea {
+		background-color : #e6f7ff;
+		overflow : scroll;
+		
+	}
+</style>
+
+</head>
+
+<body>
+<p>Draw something here!</p>
+
+<script>
+	document.writeln("<svg width=630 height=630 style='border:1px solid black'>");
+	
+	var ystep = 3;
+	
+	for( var j=0; j<90; j++ ){
+		var xstep = 4;
+		for( var i=0; i<90; i++ ){
+			document.write('<circle r="3" stroke="#000000" stroke-width="1"  fill="#000000" id=' );
+			document.write(  '\'a' + j.toString() + i.toString() + '\'' );
+			document.write( '  cx="'   );
+			document.write(  xstep + '" ' + ' cy="'   );
+			//document.write(  ystep + '" ' + '  onmouseover="this.setAttribute(\'fill\' , \'#FFFF66\'); setTimeout(function () {changeAttribute(this.id);} ,1000) ;" /> '   );
+			document.write(  ystep + '" ' + '  onmouseover="changeAttributeFor(this.id)" /> '   );
+			
+			xstep = xstep + 7;			
+		}		
+		ystep = ystep + 7;
+	}
+	document.writeln("</svg>");	
+</script>
+
+<p>A simple code that implements SVG and timeout events</p>
+<p>Here is the code</p>
+
+<blockquote>
+<textarea cols='120' rows='30'>
+
+<script>
+
+	function change(id){
+		document.getElementById( id ).setAttribute( 'fill', '#ffffff' );
+	}
+	function changeAttributeFor( id ){
+		//console.log(id);
+		document.getElementById( id ).setAttribute( 'fill', '#000000' );
+		setTimeout(  function () { change(id); }    ,5000 );
+	}	
+
+	document.writeln("<svg width=680 height=680 style='border:1px solid black'>");
+	
+	var ystep = 4;
+	
+	for( var j=0; j<75; j++ ){
+		var xstep = 4;
+		for( var i=0; i<75; i++ ){
+			document.write('<circle r="4" stroke="#ffffff"  fill="#ffffff" id=' );
+			document.write(  '\'a' + j.toString() + i.toString() + '\'' );
+			document.write( '  cx="'   );
+			document.write(  xstep + '" ' + ' cy="'   );
+			document.write(  ystep + '" ' + '  onmouseover="changeAttributeFor(this.id)" /> '   );
+			
+			xstep = xstep + 9;			
+		}		
+		ystep = ystep + 9;
+	}
+	document.writeln("</svg>");	
+</script>
+
+
+</textarea>
+</blockquote>
+
+</body>
+
+
+</html>

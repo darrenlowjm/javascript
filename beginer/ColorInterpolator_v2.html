@@ -1,0 +1,138 @@
+<html>
+<head>
+    <title>D3 Example</title>
+    <script type="text/javascript" src="https://d3js.org/d3.v4.js"></script> 
+    <style>
+	rect {
+		stroke : #000;
+		stroke-width  :0.01em;				
+	}
+	body {
+		font-size: 1.15em;
+		font-family: "serif";			
+	}	
+	.heading {
+		font-size: 2.5em;
+		font-family: "serif";	
+	}
+
+	</style>
+</head>
+
+<body>
+
+<div class='heading' style="margin-left:100px; width:1000px">
+D3 Color interpolator
+</div>
+<br>
+
+
+
+<svg class="svg1" width=800 height=50></svg>
+<svg class="svg2" width=800 height=50></svg>
+<svg class="svg3" width=800 height=50></svg>
+<svg class="svg4" width=800 height=50></svg>
+<svg class="svg5" width=800 height=50></svg>
+<svg class="svg6" width=800 height=50></svg>
+<svg class="svg7" width=800 height=50></svg>
+
+<script>
+
+var svg = d3.select("svg.svg1");
+var dataset = [
+	{"value": 10},
+	{"value": 20},
+	{"value": 30},
+	{"value": 40},
+	{"value": 50},
+	{"value": 60},
+	{"value": 70},
+	{"value": 80},
+	{"value": 90},
+	{"value": 100},
+	{"value": 110},
+	{"value": 120},
+	{"value": 130},
+	{"value": 140},
+	{"value": 150},
+	{"value": 160},
+	{"value": 170},
+	{"value": 180},
+	{"value": 190},
+	{"value": 200}
+];
+
+var numCols = 20;
+var widthRect = 30, heightRect = 30;
+var whichSvg = 1;
+var hpadding = 1;
+var vpadding = 5;
+
+var scale = d3.scaleLinear()
+		.domain( d3.extent(dataset, function (d){ return d.value}) )
+		.range( ["white", "black"] )
+		;		
+
+
+
+
+function interpolatethis(){
+	var from = document.getElementById("from").value;
+	var to = document.getElementById("to").value;
+
+	var svg = d3.select(".svg" + whichSvg);
+
+	var scale = d3.scaleLinear()
+			.domain( d3.extent(dataset, function (d){ return d.value}) )
+			.range( [from, to] )
+			.interpolate(d3.interpolateHcl)
+			//~ .interpolate(d3.interpolateRgb)
+			//.interpolate(d3.interpolateHsl)
+			//.interpolate(d3.interpolateCubehelix)
+			//~ .interpolate(d3.interpolateHcl)
+			//~ .interpolate(d3.interpolateHcl)
+			
+			;
+
+		svg.selectAll(".rect").data(dataset)
+		.enter()
+		.append("rect")
+		.attr("x", function (d,i){ return (i%numCols)*(widthRect + hpadding) + hpadding })
+		.attr("y", function (d,i){   return  (heightRect + vpadding)*Math.floor(i/numCols) } )
+		.attr("width", widthRect)
+		.attr("height", heightRect)
+		//.style("fill", function (d){ return d3.color( "hsl(208,100%," + scale(d.value) + "%)"  ).brighter(bscale(d.value))}
+		//.style("fill", function (d){ return d3.color( "hsl(15,100%," + scale(d.value) + "%)"  ).darker(dscale(d.value))}
+		//.style("fill", function (d){ return d3.color( "hsl(15,100%," + scale(d.value) + "%)"  )}
+		//.style("fill", function (d){ d3.color(  makeColorHSL(0,100,scale(d.value))  ) }	
+		.style("fill", function (d){ return scale(d.value) }
+		)
+	;
+
+	whichSvg == 7 ? (whichSvg=1):(whichSvg++) ;
+	
+
+}
+
+
+
+</script>
+<p>
+<div style="margin-left:50px; width:600px">
+
+from: <input type="text" id="from" value="white">
+to: <input type="text" id="to" value="#0000FF">
+<input type="button" value="intepolate this" onclick="interpolatethis()">
+
+<p>
+
+This is something I created to help beginners visualise their color choice after interpolation in D3.
+Simply input your color hue range e.g white, or in hex code #FF0000
+
+</div>
+
+<script>
+interpolatethis();
+</script>
+</body>
+</html>

@@ -1,0 +1,148 @@
+<html>
+<head>
+    <title>D3 Example</title>
+    <script type="text/javascript" src="https://d3js.org/d3.v4.js"></script> 
+    <style>
+	rect,circle {
+		stroke : #000;
+		stroke-width  :0.01em;
+				
+	}
+	svg {
+		border-style: solid; 	
+		border-width: 0.01em;
+	}
+	</style>
+</head>
+
+<body>
+<svg class="svg1" width=800 height=100></svg>
+<svg class="svg2" width=800 height=100></svg>
+<svg class="svg3" width=800 height=100></svg>
+
+<script>
+
+var svg = d3.select("svg.svg1");
+var dataset = [
+	{"value": 10},
+	{"value": 20},
+	{"value": 30},
+	//{"value": 100},
+	{"value": 40},
+	{"value": 50},
+	{"value": 60},
+	{"value": 70},
+	{"value": 80},
+	{"value": 90},
+	{"value": 100},
+	{"value": 110},
+	//{"value": 40},
+	{"value": 120},
+	{"value": 130},
+	{"value": 140},
+	{"value": 150},
+	{"value": 160},
+	{"value": 170},
+	{"value": 180},
+	{"value": 190},
+	{"value": 200}
+];
+
+//d3.shuffle(dataset);
+
+var numCols = 10;
+var widthRect = 30, heightRect = 30;
+var hpadding = 1;
+var vpadding = 5;
+
+var scale = d3.scaleLinear()
+		.domain( d3.extent(dataset, function (d){ return d.value}) )
+		.range([80,15])	
+		
+		
+		;
+		
+var bscale = d3.scaleLinear()
+		.domain( d3.extent(dataset, function (d){ return d.value}) )
+		.range([0.9,0]);
+var dscale = d3.scaleLinear()
+		.domain( d3.extent(dataset, function (d){ return d.value}) )
+		.range([0,3]);
+
+function makeColorHSL(h,s,l) {
+		h += "%,";
+		s += "%,";
+		l += "%)";
+		var s =  "hsl(" + h + s + l  ;
+		//console.log( d3.color(s));
+		return s;
+
+}
+
+svg.selectAll(".rect").data(dataset)
+	.enter()
+	.append("rect")
+	.attr("x", function (d,i){ return (i%numCols)*(widthRect + hpadding) + hpadding })
+	.attr("y", function (d,i){   return  (heightRect + vpadding)*Math.floor(i/numCols) } )
+	.attr("width", widthRect)
+	.attr("height", heightRect)
+	//.style("fill", function (d){ return d3.color( "hsl(208,100%," + scale(d.value) + "%)"  ).brighter(bscale(d.value))}
+	//.style("fill", function (d){ return d3.color( "hsl(15,100%," + scale(d.value) + "%)"  ).darker(dscale(d.value))}
+	//.style("fill", function (d){ return d3.color( "hsl(15,100%," + scale(d.value) + "%)"  )}
+	.style("fill", function (d){ d3.color(  makeColorHSL(0,100,scale(d.value))  ) }	
+	
+	)
+;
+
+// ---------------------------------------------------------------------------------------------------------------
+//
+// ---------------------------------------------------------------------------------------------------------------
+var miniChartHeight = heightRect + 10;
+
+var miniChartYscale = d3.scaleLinear()
+	.domain(d3.extent(dataset, function (d){ return d.value}))
+	.range([miniChartHeight-10, 0]);
+	
+var svg = d3.select("svg.svg2");
+
+svg.selectAll(".rect").data(dataset)
+	.enter()
+	.append("rect")
+	.attr("x", function (d,i){ return (i%numCols)*(widthRect + hpadding) + hpadding })
+	.attr("y", function (d,i){   return  miniChartYscale(d.value) + (miniChartHeight + vpadding)*Math.floor(i/numCols) } )
+	.attr("width", widthRect)
+	.attr("height", function (d){ return miniChartHeight - miniChartYscale(d.value)    })
+	 .style("fill", function (d){ return d3.color( "hsl(53,100%," + scale(d.value) + "%)"  ).brighter(bscale(d.value))}
+	)
+;
+
+
+// ---------------------------------------------------------------------------------------------------------------
+//
+// ---------------------------------------------------------------------------------------------------------------
+
+var svg = d3.select("svg.svg3");
+hpadding = 7;
+vpadding = 25;
+
+var rscale = d3.scaleLinear()
+	.domain( d3.extent(dataset, function (d){ return d.value}) )
+	.range([2,15]);
+
+svg.selectAll(".circle").data(dataset)
+	.enter()
+	.append("circle")
+	.attr("cx", function (d,i){ return (i%numCols + 1)*(20 + hpadding)  })
+	.attr("cy", function (d,i){   return  vpadding*(Math.floor(i/numCols)+1) } )
+	.attr("r", function (d){ return rscale(d.value)  } )
+	.style("fill", function (d){ return d3.color( "hsl(45,100%," + scale(d.value) + "%)"  ).brighter(bscale(d.value))}
+	)
+;
+
+
+
+</script>
+
+
+</body>
+</html>
