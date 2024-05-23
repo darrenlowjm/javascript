@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>D3 Example</title>
+    <script type="text/javascript" src="https://d3js.org/d3.v4.js"></script> 
+    <style>
+	svg.plot {
+		border-style: solid;
+		border-width: 2px;
+			
+	}
+	a:hover{
+		text-decoration: underline;
+	}
+	body {
+		font-size: 1.15em;
+		font-family: "Times New Roman";			
+	}	
+	.axis {
+		shape-rendering: crispEdges;		
+	}
+	circle{
+		stroke-width:1;
+		//fill:#000;
+	}
+	.labels {
+		font-size: 0.8em;
+		font-family: serif;
+		fill: #33cc33;
+	}
+	path, .tick, line{
+		stroke: #33cc33;
+	}
+	.heading {
+		font-size: 2.5em;
+		font-family: "Times New Roman";		
+	}
+
+	
+	
+    </style>
+</head>
+ <body>
+	<div class='heading' style="margin-left:360px; width:1000px">
+	Population of the major cities 
+	</div>
+	<br>
+	<br>
+
+
+	<script>
+	
+	// create the svg canvas
+	var svgCanvas = d3.select("body").append("svg")
+		.attr( "width", "1400" )
+		.attr( "height", "800" )
+		.attr("class", "plot")
+		
+
+	// --------------------------- User defined --------------------------------
+	// Select the cols names of the dataset to plot; extramarginofDomain
+	// ---------------------------------------------------------------------------
+	// name,latitude,longitude,population
+	var xColumn = "longitude"; 
+	var yColumn = "latitude";
+	var zColumn = "population";
+	var BycategoryColumn = "name";
+	var extramarginofDomain = 10;	//  +/- %	
+	var xPixelRange = 1300;		// 500px by 500px
+	var yPixelRange = 700;		// 500px by 500px
+	var cirRadiusRange = 20 ;
+	var arrayColorRange = [
+		{  range:10000000 , color:"#FF0000" }, // red
+		{  range:  5000000 , color:"#FF66cc" }, // pink
+		{  range:  2000000 , color:"#FF6600" }, // orange
+		{  range:              0 , color:"#000" }	 // black		
+		//{  range:  1000000 , color:"#FFFF00" }, // yellow		
+		//{  range:    500000 , color:"#009900" }, // green		
+		//{  range:    200000 , color:"#0066FF" }, // blue		
+		//{  range:    100000,  color:"#cc33FF" }, // purple 
+		];
+		
+
+	//
+	// calculation derived from user's inputs above
+	//
+	var extraUpperRange = 1 + extramarginofDomain/100;		// + %
+	var extraLowerRange = 1 + extramarginofDomain/100;		// +% for negative values domain
+	//var extraLowerRange = 1 - extramarginofDomain/100;		// -% for positive values domain
+
+	function fillColor( datum ){
+		if( datum[ zColumn ] > 10000000 ){ return "#FF0000" }
+		else if( datum[ zColumn ] > 5000000 ){ return "#00FF00" }
+		else if( datum[ zColumn ] > 1000000 ){ return "#0000FF" }
+		else if( datum[ zColumn ] > 500000 ){ return "#FFFF00" }
+		else { return "#000" }
+	}
+	function ColorRange( value ){	
+		for( var i=0; i<arrayColorRange.length; i++ ){
+			if( value >  arrayColorRange[i].range ){ return arrayColorRange[i].color; }
+		}	
+	}
+	
+
+	function Scatterplot( dataset ) {	
+		var xmin = d3.min(dataset, function (d){ return d[xColumn] }) * extraLowerRange ; 		
+		var xmax = d3.max(dataset, function (d){ return d[xColumn] }) * extraUpperRange;  
+		var ymin = d3.min(dataset, function (d){ return d[yColumn] }) * extraLowerRange;  		
+		var ymax = d3.max(dataset, function (d){ return d[yColumn] }) * extraUpperRange;
+		var rmin  = d3.min(dataset, function (d){ return d[zColumn] }) * extraLowerRange; 	
+		var rmax = d3.max(dataset, function (d){ return d[zColumn] }) * extraUpperRange;
+		//
+		// setup scales and axis
+		//
+		var xScale = d3.scaleLinear().domain( [xmin,xmax] ).range( [0, xPixelRange] );
+		var yScale = d3.scaleLinear().domain( [ymax,ymin] ).range( [0, yPixelRange] );			
+		var rScale = d3.scaleSqrt().domain( [0, rmax] ).range( [0, cirRadiusRange] );			
+		//~ var CategoryScale = d3.scaleOrdinal(d3.schemeCategory10);		
+		// var CategoryScale = d3.scaleOrdinal(d3.schemeCategory10);		
+		//
+		var yAxis = d3.axisLeft( yScale );
+		var xAxis = d3.axisBottom( xScale );
+
+		//~ // create the svg canvas
+		 //~ var svgCanvas = d3.select("body").append("svg")
+			//~ .attr( "width", "900" )
+			//~ .attr( "height", "600" )
+		
+		var pointerDetails = svgCanvas.append("text").text("mouse over points to see data").attr("x", 100).attr("y", 100).attr("class", "labels");
+		
+		// 
+		// AXIS
+		// x-axis
+		svgCanvas.append("g").attr( "transform", "translate(50,750)")
+			.call(xAxis);
+		svgCanvas.append("g").attr( "transform", "translate(50,50)")
+			.call(xAxis);
+		// x-axis label
+		svgCanvas.append("text").text(xColumn).attr("x", 750).attr("y", 730).attr("text-anchor", "end").attr("class", "labels");
+		//
+		// AXIS
+		// y-axis
+		svgCanvas.append("g").attr( "transform", "translate(50,50)")
+			.call(yAxis);
+		svgCanvas.append("g").attr( "transform", "translate(1360,50)")
+			.call(yAxis);
+		// y-axis label
+		svgCanvas.append("text").text(yColumn).attr("y", 70).attr("x", -400).attr("text-anchor", "middle").attr("class", "labels").attr("transform", "rotate(-90)");
+		
+		//
+		// plot area
+		//
+		var plotArea = svgCanvas.append("g").attr( "transform", "translate(50,50)");
+
+		// data bind and update
+		var cir = plotArea.selectAll("circle").data( dataset );
+		
+		cir.enter().append("circle")
+		.merge( cir )
+		.attr( "class", "plot" )
+		.attr( "cx", function (d){return xScale(d[ xColumn ])} )
+		.attr( "cy", function (d){return yScale(d[ yColumn ])} )
+		.attr( "r", function (d){return rScale( d[ zColumn ])} )
+		//.attr( "r", "3" )
+		//.style("fill", function (d){ return CategoryScale(d[ BycategoryColumn ]) })
+		//.style("stroke", function (d){ return CategoryScale(d[ BycategoryColumn ]) })
+		//.style("stroke", "#FFF" )								// circle stroke
+		//.style("fill", "rgba(255,255,255,0.6)" )					// circle fill color
+		.style("fill", function (d){ return ColorRange( d[ zColumn ] )  } )
+		//.attr("class", function (d){ return d[ BycategoryColumn ] } )
+		.on( "mouseover", function (d){  
+						d3.select(this).transition()
+							.duration(400)
+							.attr("r", 10)
+							//.style("stroke", "#FF0000")		// circle stroke
+							
+							.on("end",  function () {  d3.select(this).transition()
+													.duration(400)
+													.attr("r", function (){ return rScale( d[ zColumn ]) })
+													.style("stroke", "#FFF" ) }
+							);
+						
+						
+						pointerDetails.text( xColumn + ": " + d[ xColumn ] + "   " + yColumn + ": " +d[ yColumn ] + "  " +zColumn + ": " + d[ zColumn ] + " :  " + d[ BycategoryColumn ]);
+						
+						}
+		)
+		.on("mouseleave", function (d){d3.selectAll("." + d[ BycategoryColumn ] )  } );
+		
+		
+	}	
+	 
+	 function pre(d){
+		// check for missing values
+		//console.log(d);
+		if( d[xColumn] == "" || d[yColumn] == "" || d[zColumn] == "" || d[BycategoryColumn] == "" ){ return null; }
+		if( d[xColumn] == undefined || d[yColumn] == undefined || d[zColumn] == undefined || d[BycategoryColumn] == undefined ){ return null; }
+	 
+		d[xColumn] = +d[xColumn];
+		d[yColumn] = +d[yColumn];
+		d[zColumn] = +d[zColumn];
+		
+		if( d[zColumn] < 200000 ){ return null; }
+		
+		return d;
+	 }
+	 
+	 function render( dataArray ){
+		//console.log( dataArray );
+		Scatterplot( dataArray );
+	 }
+	 
+	//d3.csv( "population_100000.csv", pre, render );
+	d3.csv( "cities_100k.csv", pre, render );
+	//d3.csv( "test.csv", pre, render );
+	  
+	</script>
+
+	<!--  Body text goes here -->
+	<!--  Body text goes here -->
+	<p>
+	<div style="margin-left:200px; width:1000px">
+	A simple scatter plot using the dataset from  http://www.geonames.org.  This plot shows the distribution of some of the world cities' population.  This dataset has about 4000 datum, and it is interesting to see that the 
+	continents are recognizable even without mapping the plot 	to a globe map.  The population size is denoted by the size of the circles, and color, in order of red, pink, orange, black.  Try changing the background and 
+	plot colors, to give another depth of field.  My personal preference is the white background paired with black plots, which interestingly is able to give a sense of the population density.
+	
+	
+	<p>
+	<div style="float:left">Click to try other background colors :</div> 
+	<svg width=200 height= 30 >	
+	<a onclick="d3.selectAll('svg.plot').style('background-color','white') "><rect width="20" height="20" x="10" y="0" style="fill:white; stroke:#000; stroke-width:0.01em"  /></a> 
+	<a onclick="d3.selectAll('svg.plot').style('background-color','black') "><rect width="20" height="20" x="35" y="0" style="fill:black; stroke:#000; stroke-width:0.01em"  /></a> 
+	<a onclick="d3.selectAll('svg.plot').style('background-color','grey') "><rect width="20" height="20" x="60" y="0" style="fill:grey; stroke:#000; stroke-width:0.01em"  /></a> 	
+	</svg>
+	<p>
+	<div style="float:left">Click to try other point colors : </div> 
+	<svg width=200 height= 30 >
+	<a onclick="d3.selectAll('circle.plot').style('fill','rgba(255,255,255, 0.4)') "><circle cx="15" cy="10" r="8" style="fill:white; stroke:#000; stroke-width:0.01em"  /></a> | 
+	<a onclick="d3.selectAll('circle.plot').style('fill','rgba(0,0,0, 0.4)') "><circle cx="40" cy="10" r="8" style="fill:black; stroke:#000; stroke-width:0.01em"  /></a>
+	<a onclick="d3.selectAll('circle.plot').style('fill','rgba(255,255,0, 0.4)') "><circle cx="65" cy="10" r="8" style="fill:yellow; stroke:#000; stroke-width:0.01em"  /></a>
+	<a onclick="d3.selectAll('circle.plot').style('fill','rgba(255,0,0, 0.4)') "><circle cx="90" cy="10" r="8" style="fill:red; stroke:#000; stroke-width:0.01em"  /></a>
+	<a onclick="d3.selectAll('circle.plot').style('fill','rgba(0,153,0, 0.4)') "><circle cx="115" cy="10" r="8" style="fill:green; stroke:#000; stroke-width:0.01em"  /></a>
+	<a onclick="d3.selectAll('circle.plot').style('fill', function (d){ return ColorRange( d[ zColumn ] )  } ) "><circle cx="140" cy="10" r="8" style="fill:black; stroke:#000; stroke-width:0.01em"  /></a>
+	</svg>
+	</div>
+
+
+
+
+  </body>
+</html>

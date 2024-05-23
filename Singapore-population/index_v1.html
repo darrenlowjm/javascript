@@ -1,0 +1,77 @@
+<body>
+<script src="https://d3js.org/d3.v4.js"></script>
+
+<script>
+
+
+var filename = "singapore-residents-by-age-group-ethnic-group-and-sex-end-june-annual.csv";
+
+function row(d){	
+		//year,resident,age,population
+		if( d.age.search("Over") != -1 ){return null;}	// remove the "& over rows"
+		
+		d.population = Number.isFinite(+d.population)  ? +d.population : 0 ;		// check for empty strings or strings. Set to 0.		
+		return d;	
+}	
+
+d3.csv(filename, row, function(error, dataset){
+	if(error) throw error;
+
+	var nested_dataset = d3.nest()
+		.key( function(d){return d.age} )
+		.key( function(d){return d.year} )
+		.entries(dataset);
+			
+	//console.log(nested_dataset);
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+		
+		
+		
+		
+}
+);	//end of open file
+
+
+
+
+
+</script>
+
+</body>

@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>D3 Example</title>
+    <script type="text/javascript" src="https://d3js.org/d3.v4.js"></script> 
+    <style>
+	svg.plot {
+		border-style: solid;
+		border-width: 2px;		
+		background-color: #333333;
+		
+	}
+	a:hover{
+		text-decoration: underline;
+	}
+	body {
+		font-size: 1.15em;
+		font-family: "Times New Roman";			
+	}	
+	.axis {
+		shape-rendering: crispEdges;		
+	}
+	circle{
+		stroke-width:1;
+		//fill:#000;
+	}
+	.labels,.label1,.label3 {		
+		font-size: 0.8em;
+		font-family: serif;
+		fill: #FFFFFF;
+	}
+	.label2,.label4 {
+			font-size: 2em;
+			font-family: serif;
+			fill: #FFFFFF;
+
+	}
+	path, .tick, line{
+		stroke: #FFFFFF;
+				
+	}
+	.heading {
+		font-size: 2.5em;
+		font-family: "Times New Roman";		
+	}
+	.bar-xaxis text {
+		display:none;
+	}
+	
+	
+    </style>
+</head>
+ <body>
+	<div class='heading' style="margin-left:360px; width:1000px">
+	Population of the major cities 
+	</div>
+	<br>
+	<br>
+
+	<svg></svg>
+
+	<script>
+	var sizeSvg = { wt: 1500, ht: 800 };	
+	var sizeChart = { wt: 1380, ht: 550};
+	var margin = {
+		left: (sizeSvg.wt-sizeChart.wt)/2 ,
+		top: (sizeSvg.ht-sizeChart.ht)/2 - 100
+	};
+	
+	//var svg = d3.select("body").append("svg")
+	var svg = d3.select("svg")
+		.attr( "width", sizeSvg.wt )
+		.attr( "height", sizeSvg.ht )
+		.attr("class", "plot")
+		.append("g").attr( "transform", "translate(" + margin.left + "," + margin.top + ")" )
+		
+
+	// --------------------------- User defined --------------------------------
+	// Select the cols names of the dataset to plot; extramarginofDomain
+	// ---------------------------------------------------------------------------
+	// name,latitude,longitude,population
+	var xColumn = "longitude"; 
+	var yColumn = "latitude";
+	var zColumn = "population";
+	var BycategoryColumn = "name";
+	var extramarginofDomain = 10;	//  +/- %	
+	var xPixelRange = sizeChart.wt;		// 500px by 500px
+	var yPixelRange = sizeChart.ht;		// 500px by 500px
+	var cirRadiusRange = 10 ;
+	var arrayColorRange = [
+		{  range:7000000 , color:"#E31A1C" }, // red
+		{  range:5000000 , color:"#FD8D3C" }, // pink
+		{  range:2000000 , color:"#FFFFb2" }, // orange
+		{  range:  100000 , color:"rgba(242,240,247,0.9)" }	 // black		
+		//{  range:  1000000 , color:"#FFFF00" }, // yellow		
+		//{  range:    500000 , color:"#009900" }, // green		
+		//{  range:    200000 , color:"#0066FF" }, // blue		
+		//{  range:    100000,  color:"#cc33FF" }, // purple 
+		];
+		
+
+	//
+	// calculation derived from user's inputs above
+	//
+	var extraUpperRange = 1 + extramarginofDomain/100;		// + %
+	var extraLowerRange = 1 + extramarginofDomain/100;		// +% for negative values domain
+	//var extraLowerRange = 1 - extramarginofDomain/100;		// -% for positive values domain
+
+	function ColorRange( value ){	
+		for( var i=0; i<arrayColorRange.length; i++ ){
+			if( value >  arrayColorRange[i].range ){ return arrayColorRange[i].color; }
+		}	
+	}
+	
+
+	function Scatterplot( dataset ) {	
+	
+		// -----------------------------------------------------------------------------------------------------------------------------
+		// scatter chart
+		// -----------------------------------------------------------------------------------------------------------------------------
+	
+		var xmin = d3.min(dataset, function (d){ return d[xColumn] }) * extraLowerRange ; 		
+		var xmax = d3.max(dataset, function (d){ return d[xColumn] }) * extraUpperRange;  
+		var ymin = d3.min(dataset, function (d){ return d[yColumn] }) * extraLowerRange;  		
+		var ymax = d3.max(dataset, function (d){ return d[yColumn] }) * extraUpperRange;
+		var rmin  = d3.min(dataset, function (d){ return d[zColumn] }) * extraLowerRange; 	
+		var rmax = d3.max(dataset, function (d){ return d[zColumn] }) * extraUpperRange;
+		//
+		// setup scales and axis
+		//
+		var xScale = d3.scaleLinear().domain( [xmin,xmax] ).range( [0, sizeChart.wt] );
+		var yScale = d3.scaleLinear().domain( [ymax,ymin] ).range( [0, sizeChart.ht] );			
+		var rScale = d3.scaleSqrt().domain( [0, rmax] ).range( [0, cirRadiusRange] );	
+		//var colorScale = d3.scaleLinear().domain([rmin,rmax]).range(["#cce0ff", "#0066ff"]);
+		//~ var CategoryScale = d3.scaleOrdinal(d3.schemeCategory10);		
+		// var CategoryScale = d3.scaleOrdinal(d3.schemeCategory10);		
+		//
+		var yAxis = d3.axisLeft( yScale );
+		var xAxis = d3.axisBottom( xScale );
+		
+		var pointerDetails1 = svg.append("text").text("City").attr("x", 50).attr("y", 350).attr("class", "label1");
+		var pointerDetails2 = svg.append("text").text("").attr("x", 50).attr("y", 380).attr("class", "label2");
+		var pointerDetails3 = svg.append("text").text("Population").attr("x", 50).attr("y", 430).attr("class", "label3");
+		var pointerDetails4 = svg.append("text").text("").attr("x", 50).attr("y", 460).attr("class", "label4");
+		
+		
+		svg.append("g").attr( "transform", "translate( 0," + sizeChart.ht + ")" )
+			.call(xAxis);
+		svg.append("g")
+			.call(yAxis);
+
+		svg.append("text").text(xColumn).attr("x", sizeChart.wt-50 ).attr("y", sizeChart.ht -10).attr("text-anchor", "end").attr("class", "labels");
+		svg.append("text").text(yColumn).attr("y", 20).attr("x", -20).attr("text-anchor", "middle").attr("class", "labels").attr("transform", "rotate(-90)");
+
+		var legend = svg.append("g").attr( "transform", "translate(50,50)"  )
+			
+			legend.selectAll(".legend").data(arrayColorRange)
+			.enter()
+			.append("circle")
+			.attr("r", function (d,i){ return 10-(i*2)})
+			.attr("cx", 0)
+			.attr("cy", function (d,i){ return i*20;})
+			.attr("fill", function (d){ return d.color; })
+			;
+			legend.selectAll(".legend").data(arrayColorRange)
+			.enter()
+			.append("text")
+			.attr("x", 20)
+			.attr("y", function (d,i){ return i*20;})
+			.text( function (d){ return "> " + d3.format(",d")(d.range);} )
+			.attr("class", "labels")
+			;
+			
+			
+			
+			
+
+		// data bind and update
+		svg.append("g")
+		.selectAll("circle").data( dataset )
+		.enter()
+			.append("circle")
+			.sort( function (a,b){ return a[zColumn] - b[zColumn] })
+			//.attr( "class", function (d,i){ return "circle-" + i ;} )
+			.attr( "class", function (d,i){ return "plot c" + d.geonameid ;} )
+			.attr( "cx", function (d){return xScale(d[ xColumn ])} )
+			.attr( "cy", function (d){return yScale(d[ yColumn ])} )
+			.attr( "r", 0)
+			.style("fill", function (d){ return ColorRange( d[ zColumn ] )  } )
+			.on( "mouseover", function (d){  
+							d3.select(this).transition()
+								.duration(400)
+								.attr("r",  parseInt(d3.select(this).attr("r")) + 10   )
+								.on("end",  function () {  d3.select(this).transition()
+												.duration(400)
+												.attr("r", function (){ return rScale( d[ zColumn ]) })
+												}
+								);		
+							d3.select( ".r" + d.geonameid )
+							.transition()
+								.duration(100)
+								.ease(d3.easeLinear)
+								.style("fill", "#FFF")
+								.style("fill-opacity", 1)
+								
+							.transition()
+								.delay(3000)
+								.duration(100)
+								.ease(d3.easeLinear)
+								.style("fill", "#000")
+								
+							;								
+														
+							d3.select(".label2").text( d[ BycategoryColumn ] );
+							d3.select(".label4").text( d3.format(",d")(d[ zColumn ]) );
+						}
+			)	
+			.transition()
+				.delay( function (d,i){return i*10;})
+				.attr( "r", function (d){return rScale( d[ zColumn ])} )
+				.on( "end",  function (d){
+							d3.select(".label2").text(d[ BycategoryColumn ]  );
+							d3.select(".label4").text(  d3.format(",d")(d[ zColumn ]) );								
+							}
+				)
+			;
+			
+			
+			//~ svg.selectAll("none").data( dataset )
+			//~ .enter()
+			//~ .append("text")	
+			//~ .sort( function (a,b){ return a[zColumn] - b[zColumn] })					
+			//~ .text("")
+			//~ .attr("class", "label2")
+			//~ .attr("x",50).attr("y",380)
+			//~ .style("font-size", "2em")
+			//~ .transition()
+				//~ .delay(function (d,i){return i*10})
+				//~ .duration(10)
+				//~ .text(function(d){return d[ BycategoryColumn ]})
+				//~ .on("end", function (){ d3.select(this).style("display", "none") } )
+			//~ ;
+			
+			//~ svg.selectAll("none").data( dataset )
+			//~ .enter()
+			//~ .append("text")	
+			//~ .sort( function (a,b){ return a[zColumn] - b[zColumn] })					
+			//~ .text("")
+			//~ .attr("class", "label4")
+			//~ .attr("x",50).attr("y",460)
+			//~ .style("font-size", "2em")
+			//~ .transition()
+				//~ .delay(function (d,i){return i*10})
+				//~ .duration(10)
+				//~ .text(function(d){return d3.format(",d")(d[ zColumn ])})
+				//~ .on("end", function (){ d3.select(this).style("display", "none") } )
+				
+			//~ ;
+			
+			
+
+			
+		// -----------------------------------------------------------------------------------------------------------------------------
+		// bar chart
+		// -----------------------------------------------------------------------------------------------------------------------------
+	
+		var Barmargin = {
+			left: margin.left ,
+			top: margin.top + sizeChart.ht + 5
+		};
+	
+		var sizeBarChart = {
+			wt: sizeChart.wt,
+			ht: 180
+		};
+		//console.log(sizeBarChart.wt);
+	
+		var barSvg = d3.select("svg").append("g").attr( "transform", "translate(" + Barmargin.left + "," + Barmargin.top + ")" );
+	
+		var ymin = d3.min(dataset, function (d){ return d[zColumn] });		
+		var ymax = d3.max(dataset, function (d){ return d[zColumn] });  //console.log(ymax);
+
+		var yScale = d3.scaleLinear().domain([ymin, ymax]).range([sizeBarChart.ht, 0]);
+		var dataset_filtered_sorted = dataset.filter( function (d){return(d[zColumn] > 2000000?  true:  false) } ).sort( function (a,b){ return a[xColumn] -b[xColumn]; } );
+		console.log(dataset_filtered_sorted);
+		console.log(dataset_filtered_sorted.length);
+		var xScale = d3.scaleBand()
+					.domain( dataset_filtered_sorted.map( function (d){ return d.geonameid } ) 
+					)
+					.range( [0, sizeBarChart.wt])					
+					;
+					
+		console.log(xScale.domain());
+		var yAxis = d3.axisLeft( yScale ).ticks(5).tickFormat(d3.format(".0s"));
+		var xAxis = d3.axisBottom( xScale );
+		barSvg.append("g").attr("class", "bar-xaxis").attr( "transform", "translate( 0," + sizeBarChart.ht + ")" )
+			.call(xAxis);
+		barSvg.append("g")
+			.call(yAxis);
+
+		barSvg.append("g").selectAll(".bar").data(dataset_filtered_sorted)
+		.enter()
+			.append("rect")
+			.attr( "class", function (d,i){ return "r" + d.geonameid ;} )
+			.attr("x", function (d){return xScale(d.geonameid); } )
+			.attr("y", function (d){ return yScale(d[zColumn]); })
+			.attr("width", xScale.bandwidth())
+			.attr("height", function (d){ return sizeBarChart.ht - yScale(d[zColumn]) ;})
+			.style("fill", function (d){ return ColorRange( d[ zColumn ] )  })
+			.style("fill-opacity", 0.5)
+			.style("stroke", "#000000")		
+			.style("stroke-width", "0.02em")		
+			.on( "mouseover", function (d){  
+					d3.select( ".c" + d.geonameid )
+					.transition()
+						.duration(500)
+						.attr("r",  function (){ return rScale( d[ zColumn ]) + 10 }  )
+						//.style("fill", "#FFFF00")
+						//.style("fill-opacity", 0.8)
+						.on("end",  function () {  d3.select(this).transition()
+										.delay(1000)
+										.duration(500)
+										.attr("r", function (){ return rScale( d[ zColumn ]) })
+										//.style("fill", function (d){ return ColorRange( d[ zColumn ] )  } )
+										}
+						);		
+					
+					
+					d3.select(this)
+					.transition()
+						.duration(100)
+						.ease(d3.easeLinear)
+						.style("fill", "#FFFFFF")
+						.style("fill-opacity", 1)
+					.transition()
+						.delay(1000)
+						.duration(100)
+						.ease(d3.easeLinear)
+						.style("fill", function (d){ return ColorRange( d[ zColumn ] )  })
+						.style("fill-opacity", 0.5)
+					;								
+												
+					svg.select(".label2").text( d[ BycategoryColumn ] ).style("font-size", "2em");
+					svg.select(".label4").text( d3.format(",d")(d[ zColumn ]) ).style("font-size", "2em");
+
+				}
+			)			
+			;
+	
+	}	
+	 
+	 function pre(d){
+		// check for missing values
+		//console.log(d);
+		if( d[xColumn] == "" || d[yColumn] == "" || d[zColumn] == "" || d[BycategoryColumn] == "" ){ return null; }
+		if( d[xColumn] == undefined || d[yColumn] == undefined || d[zColumn] == undefined || d[BycategoryColumn] == undefined ){ return null; }
+	 
+		d[xColumn] = +d[xColumn];
+		d[yColumn] = +d[yColumn];
+		d[zColumn] = +d[zColumn];
+		
+		if( d[zColumn] < 200000 ){ return null; }
+		console.log(d);
+		return d;
+	 }
+	 
+	 
+	//d3.csv( "population_100000.csv", pre, render );
+	d3.csv( "cities_100k.csv", pre, Scatterplot );
+	//d3.csv( "test.csv", pre, render );
+	  
+	</script>
+
+	<!--  Body text goes here -->
+	<!--  Body text goes here -->
+	<p>
+	<div style="margin-left:200px; width:1000px">
+	A simple scatter plot using the dataset from  http://www.geonames.org.  This plot shows the distribution of some of the world cities' population.  This dataset has about 4000 datum, and it is interesting to see that the 
+	continents are recognizable even without mapping the plot 	to a globe map.  The population size is denoted by the size of the circles, and color, in order of red, pink, orange, black.  Try changing the background and 
+	plot colors, to give another depth of field.  My personal preference is the white background paired with black plots, which interestingly is able to give a sense of the population density.
+	
+	
+	<p>
+	<div style="float:left">Click to try other background colors :</div> 
+	<svg width=200 height= 30 >	
+	<a onclick="d3.selectAll('svg.plot').style('background-color','grey') "><rect width="20" height="20" x="60" y="0" style="fill:grey; stroke:#000; stroke-width:0.01em"  /></a> 	
+	</svg>
+	<p>
+	<div style="float:left">Click to try other point colors : </div> 
+	<svg width=200 height= 30 >
+	<a onclick="d3.selectAll('circle.plot').style('fill','rgba(255,255,255, 0.4)') "><circle cx="15" cy="10" r="8" style="fill:white; stroke:#000; stroke-width:0.01em"  /></a> | 
+	<a onclick="d3.selectAll('circle.plot').style('fill','rgba(0,0,0, 0.4)') "><circle cx="40" cy="10" r="8" style="fill:black; stroke:#000; stroke-width:0.01em"  /></a>
+	<a onclick="d3.selectAll('circle.plot').style('fill','rgba(255,255,0, 0.4)') "><circle cx="65" cy="10" r="8" style="fill:yellow; stroke:#000; stroke-width:0.01em"  /></a>
+	<a onclick="d3.selectAll('circle.plot').style('fill','rgba(255,0,0, 0.4)') "><circle cx="90" cy="10" r="8" style="fill:red; stroke:#000; stroke-width:0.01em"  /></a>
+	<a onclick="d3.selectAll('circle.plot').style('fill','rgba(0,153,0, 0.4)') "><circle cx="115" cy="10" r="8" style="fill:green; stroke:#000; stroke-width:0.01em"  /></a>
+	<a onclick="d3.selectAll('circle.plot').style('fill', function (d){ return ColorRange( d[ zColumn ] )  } ) "><circle cx="140" cy="10" r="8" style="fill:black; stroke:#000; stroke-width:0.01em"  /></a>
+	</svg>
+	</div>
+
+
+
+
+  </body>
+</html>

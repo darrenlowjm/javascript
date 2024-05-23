@@ -1,0 +1,251 @@
+<html>
+<head>
+    <title>D3 Example</title>
+    <script type="text/javascript" src="https://d3js.org/d3.v4.js"></script> 
+    <!-- <script src="https://d3js.org/d3.v4.min.js"></script> -->
+    <style>
+	.axis {
+		shape-rendering: crispEdges;
+	}
+	svg {
+		border: 1px solid yellow; 
+	}
+	code {
+		color: blue;
+	}
+	body {
+		font-size: 1.15em;
+		font-family: "Times New Roman";			
+	}	
+	a {
+		text-decoration: underline;
+		color: blue;
+	}
+	.labels {
+		font-size: 0.8em;
+		font-family: serif;
+		fill: #33cc33;
+	}
+	div.heading {
+		font-size: 2.5em;
+		font-family: "Times New Roman";	
+		width:1300px; 
+		text-align:center;
+		margin:auto; 
+		border: 1px dotted green; 
+	}
+	div.content {
+		margin:auto; 
+		width:1300px; 
+		text-align:center;
+		border: 1px dotted pink; 	
+		height: 800px;				
+	}
+	div.chart {
+		margin:auto; 
+		width:900px; 
+		text-align:center;
+		border: 1px dotted blue; 
+	}
+	div.content2 {
+		margin:auto; 
+		width:1300px; 
+		clear:left;
+		text-align:center;
+		border: 1px solid black; 
+	}
+	div.footer {
+		margin:auto; 
+		width:1300px; 
+		clear:left;
+		text-align:center;
+		font-size: 0.8em;
+		border: 1px solid purple; 
+	}
+	g {
+		border: 2px solid black; 
+	}
+
+
+    </style>
+</head>
+ <body>
+	<div class='heading'>My chart title goes here...</div>
+	<br>
+	
+	<div class="content">
+		<div class="chart"></div>
+	</div>
+	
+	<br>
+
+	
+	<script>
+	// -----------------------------------------------------------------------------
+	// User defined constants
+	// -----------------------------------------------------------------------------
+	//
+	var sizeSvg 	= { wt:800, ht:500 };
+	var sizeChart 	= { wt:300, ht:400 };		
+	//
+	// calculated based on above settings
+	//
+	var margin 	= { 
+		left: (sizeSvg.wt - sizeChart.wt)/2 , 
+		top: (sizeSvg.ht - sizeChart.ht)/2 
+	};	
+	// create the svg element <svg><g>
+	 var svg = d3.select("div.chart").append("svg")
+		.attr( "width",  sizeSvg.wt )
+		.attr( "height",  sizeSvg.ht ) ;
+
+	
+
+	//
+	//var chartG = svg.append("g").attr("class", "chartG").attr( "transform", "translate(" + margin.left + "," + margin.top + ")" );	
+	var chartG = svg.append("g").attr("class", "chartG").attr( "transform", "translate(0,0)");	
+	//
+	//var chartLeft = chartG.append("g").attr("class", "chartLeft").attr("transform", "translate(" + sizeChart.wt + ",0 )" );
+	var chartLeft = chartG.append("g").attr("class", "chartLeft").attr("transform", "translate(0,0)"  );
+	var chartRight = chartG.append("g").attr("class", "chartRight").attr("transform", "translate(" + (sizeChart.wt + 50) + ",0)");
+	
+	var filename = "singapore-residents-by-age-group-ethnic-group-and-sex-end-june-annual.csv";
+
+	function row(d){	
+			//year,resident,age,population
+			if( d.age.search("Over") != -1 ){return null;}	// remove the "& over rows"			
+			d.population = Number.isFinite(+d.population)  ? +d.population : 0 ;		// check for empty strings or strings. Set to 0.		
+			return d;	
+	}	
+
+
+	d3.csv(filename, row, function(dataset){
+		// remove entires related to "total residents"
+		dataset = dataset.filter( function(d){ return d.resident !="Total Residents" } );
+		//console.log(dataset_nested);
+		var pop_extent = d3.extent( dataset, function(d){ return d.population; } );
+		//console.log(pop_extent);		
+		
+		// define to x-axis  (left and right side) 
+		// mayb no need to define 2 scales? Can simply negate .
+		xscaleR = d3.scaleLinear()
+			.domain(pop_extent)
+			.range([0,sizeChart.wt])
+			.nice();
+			
+		xscaleL = d3.scaleLinear()
+			.domain(pop_extent)
+			.range([sizeChart.wt,0])
+			.nice();
+		
+		yscale = d3.scaleBand()
+			.domain(  d3.map(dataset, function(d){return d.age;}).keys().map( function(d){return d.replace("Years", "yr") } ).reverse()   )
+			.range([0,sizeChart.ht]);
+	
+		//console.log(yscale("10 - 14 Years"));
+		d3.select(".chartRight").append("g").attr("class", "xaxisRight").attr("transform", "translate(0," + sizeChart.ht +")").style("font-size", 10)
+			.call( d3.axisBottom(xscaleR).ticks(3) );
+
+		d3.select(".chartLeft").append("g").attr("class", "xaxisLeft").style("font-size", 10).attr("transform", "translate(0," + sizeChart.ht +")")
+			.call( d3.axisBottom(xscaleL).ticks(3)  );
+
+		d3.select(".chartRight").append("g").attr("class", "yaxis").attr("transform", "translate(0,0)").style("font-size", 10)
+			.call( d3.axisLeft(yscale).tickSize(0)  );
+
+		dataset_nested = d3.nest()
+			.key( function(d){return d.age;} )
+			.entries(dataset);
+		console.log(dataset_nested);
+
+			// -------------------------------
+			// Male
+			// -------------------------------
+			var selection = d3.select(".chartRight").selectAll(".male").data(dataset_nested);
+			//
+			var enter = selection.enter()
+				.append("rect");
+			//
+			var update = selection
+				.merge( enter )
+				.attr("class", "male")
+				.style("fill", "purple")
+				.attr("x", 0 )
+				.attr("y",  function(d){ return yscale(d.key.replace("Years", "yr")) } )
+				.attr("height", yscale.bandwidth())
+				.attr("width", 0)
+				.transition()
+				.delay(function(d,i){return i*50}).duration(1000)
+				.attr("width", function(d){ 	return xscaleR(
+											d.values.filter(   function(d1){ return d1.year=="1960"?  (d1.resident=="Total Male Residents"? true: false) : false   }   )
+												[0].population
+										); 
+									}
+					)			
+				;
+			//~ // -------------------------------
+			//~ // Female
+			//~ // -------------------------------
+			var selection = d3.select(".chartLeft").selectAll(".female").data(dataset_nested);
+			//
+			var enter = selection.enter()
+				.append("rect");
+			//
+			var update = selection
+				.merge( enter )
+				.attr("class", "female")
+				.style("fill", "green")				
+				.attr("y",  function(d){ return yscale(d.key.replace("Years", "yr")) } )				
+				.attr("x", function(d){ 	return xscaleL(
+											d.values.filter(   function(d1){ return d1.year=="1960"?  (d1.resident=="Total Female Residents"? true: false) : false   }   )
+												[0].population
+										); 
+									}
+					)			
+				.attr("height", yscale.bandwidth() )
+				//.attr("width", 0)
+				//.style("display", none)
+				//.attr("width", function(){return sizeChart.wt - parseFloat(d3.select(this).attr("x"))  } )
+				.transition()
+				.delay(function(d,i){return i*50}).duration(1000)
+				.attr("width", function(){return sizeChart.wt - parseFloat(d3.select(this).attr("x"))  } )
+				//.style("display", true)
+					
+					
+				;
+			
+	
+		
+	
+	
+	
+	
+	
+	
+	
+	} ); // end of open csv
+
+
+	
+	</script>
+
+
+	<!--  Body text goes here -->
+	<!--  Body text goes here -->
+
+	<br>
+
+<div class="content2">Some descriptions here...</div>
+
+<div class="footer">
+<p style="text-decoration:underline">Conditions of use:</p>
+ Datasets downloaded from https://data.gov.sg/dataset on Nov 2016.
+<br>
+ Any analysis or transformation of data made here shall not be attributed to the Singapore Government or its Statutory Boards.
+ <br> 
+The datasets provided by the Singapore Government and its Statutory Boards via Data.gov.sg are governed by the Terms of Use available at https://data.gov.sg/site-terms. 
+To the fullest extent permitted by law, the Singapore Government and its Statutory Boards are not liable for any damage or loss of any kind caused directly 
+or indirectly by the use of the datasets or any derived analyses or applications.
+</div>
+
+  </body>
+</html>

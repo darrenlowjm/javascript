@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<style>
+	svg.plot {			
+		background-color: #333333;		
+	}
+	a:hover{
+		text-decoration: underline;
+	}
+	body {
+		font-size: 1.15em;
+		font-family: "Times New Roman";			
+	}	
+	.axis {
+		shape-rendering: crispEdges;		
+	}
+	circle{
+		stroke-width:1;
+		//fill:#000;
+	}
+	.labels,.label1,.label2,.label3,.label4 {
+		
+		font-size: 0.8em;
+		font-family: serif;
+		fill: #FFFFFF;
+	}
+	path, .tick, line{
+		stroke: #FFFFFF;
+				
+	}
+	.heading {
+		font-size: 2.5em;
+		font-family: "Times New Roman";		
+	}
+	.bar-xaxis text {
+		display:none;
+	}
+	 </style>
+
+<svg></svg>
+<script>
+	var sizeSvg = { wt: 1500, ht: 800 };	
+	var sizeChart = { wt: 1380, ht: 550};
+	var margin = {
+		left: (sizeSvg.wt-sizeChart.wt)/2 ,
+		top: (sizeSvg.ht-sizeChart.ht)/2 - 100
+	};
+	
+	var svg = d3.select("svg")
+		.attr( "width", sizeSvg.wt )
+		.attr( "height", sizeSvg.ht )
+		.attr("class", "plot")
+		.append("g").attr( "transform", "translate(" + margin.left + "," + margin.top + ")" )
+			
+	var xColumn = "longitude"; 
+	var yColumn = "latitude";
+	var zColumn = "population";
+	var BycategoryColumn = "name";
+	var extramarginofDomain = 10;	//  +/- %	
+	var xPixelRange = sizeChart.wt;		// 500px by 500px
+	var yPixelRange = sizeChart.ht;		// 500px by 500px
+	var cirRadiusRange = 10 ;
+	var arrayColorRange = [
+		{  range:7000000 , color:"#E31A1C" }, 
+		{  range:5000000 , color:"#FD8D3C" },
+		{  range:2000000 , color:"#FFFFb2" }, 
+		{  range:  100000 , color:"rgba(242,240,247,0.9)" }	 	
+		];
+			
+	var extraUpperRange = 1 + extramarginofDomain/100;		// + %
+	var extraLowerRange = 1 + extramarginofDomain/100;		// +% for negative values domain
+	
+
+	function ColorRange( value ){	
+		for( var i=0; i<arrayColorRange.length; i++ ){
+			if( value >  arrayColorRange[i].range ){ return arrayColorRange[i].color; }
+		}	
+	}
+	
+
+	function Scatterplot( dataset ) {	
+		var xmin = d3.min(dataset, function (d){ return d[xColumn] }) * extraLowerRange ; 		
+		var xmax = d3.max(dataset, function (d){ return d[xColumn] }) * extraUpperRange;  
+		var ymin = d3.min(dataset, function (d){ return d[yColumn] }) * extraLowerRange;  		
+		var ymax = d3.max(dataset, function (d){ return d[yColumn] }) * extraUpperRange;
+		var rmin  = d3.min(dataset, function (d){ return d[zColumn] }) * extraLowerRange; 	
+		var rmax = d3.max(dataset, function (d){ return d[zColumn] }) * extraUpperRange;
+		var xScale = d3.scaleLinear().domain( [xmin,xmax] ).range( [0, sizeChart.wt] );
+		var yScale = d3.scaleLinear().domain( [ymax,ymin] ).range( [0, sizeChart.ht] );			
+		var rScale = d3.scaleSqrt().domain( [0, rmax] ).range( [0, cirRadiusRange] );	
+		var yAxis = d3.axisLeft( yScale );
+		var xAxis = d3.axisBottom( xScale );
+		
+		var pointerDetails1 = svg.append("text").text("City").attr("x", 50).attr("y", 350).attr("class", "label1");
+		var pointerDetails2 = svg.append("text").text("").attr("x", 50).attr("y", 380).attr("class", "label2");
+		var pointerDetails3 = svg.append("text").text("Population").attr("x", 50).attr("y", 430).attr("class", "label3");
+		var pointerDetails4 = svg.append("text").text("").attr("x", 50).attr("y", 460).attr("class", "label4");
+				
+		svg.append("g").attr( "transform", "translate( 0," + sizeChart.ht + ")" )
+			.call(xAxis);
+		svg.append("g")
+			.call(yAxis);
+
+		svg.append("text").text(xColumn).attr("x", sizeChart.wt-50 ).attr("y", sizeChart.ht -10).attr("text-anchor", "end").attr("class", "labels");
+		svg.append("text").text(yColumn).attr("y", 20).attr("x", -20).attr("text-anchor", "middle").attr("class", "labels").attr("transform", "rotate(-90)");
+
+		var legend = svg.append("g").attr( "transform", "translate(50,50)"  )
+			
+			legend.selectAll(".legend").data(arrayColorRange)
+			.enter()
+			.append("circle")
+			.attr("r", function (d,i){ return 10-(i*2)})
+			.attr("cx", 0)
+			.attr("cy", function (d,i){ return i*20;})
+			.attr("fill", function (d){ return d.color; })
+			;
+			legend.selectAll(".legend").data(arrayColorRange)
+			.enter()
+			.append("text")
+			.attr("x", 20)
+			.attr("y", function (d,i){ return i*20;})
+			.text( function (d){ return "> " + d3.format(",d")(d.range);} )
+			.attr("class", "labels")
+			;
+
+		svg.append("g")
+		.selectAll("circle").data( dataset )
+		.enter()
+			.append("circle")
+			.sort( function (a,b){ return a[zColumn] - b[zColumn] })
+			.attr( "class", function (d,i){ return "plot c" + d.geonameid ;} )
+			.attr( "cx", function (d){return xScale(d[ xColumn ])} )
+			.attr( "cy", function (d){return yScale(d[ yColumn ])} )
+			.attr( "r", 0)
+			.style("fill", function (d){ return ColorRange( d[ zColumn ] )  } )
+			.on( "mouseover", function (d){  
+							d3.select(this).transition()
+								.duration(400)
+								.attr("r",  parseInt(d3.select(this).attr("r")) + 10   )
+								.on("end",  function () {  d3.select(this).transition()
+												.duration(400)
+												.attr("r", function (){ return rScale( d[ zColumn ]) })
+												}
+								);		
+							d3.select( ".r" + d.geonameid )
+							.transition()
+								.duration(500)
+								.ease(d3.easeLinear)
+								.style("fill", "#FF0000")
+								
+							.transition()
+								.delay(3000)
+								.duration(1000)
+								.ease(d3.easeLinear)
+								.style("fill", "#000")
+								
+							;								
+														
+							d3.select(".label2").text( d[ BycategoryColumn ] ).style("font-size", "2em");
+							d3.select(".label4").text( d3.format(",d")(d[ zColumn ]) ).style("font-size", "2em");
+						}
+			)	
+			.transition()
+				.delay( function (d,i){return i*10;})
+				.attr( "r", function (d){return rScale( d[ zColumn ])} )
+			;
+			
+			
+			svg.selectAll("none").data( dataset )
+			.enter()
+			.append("text")	
+			.sort( function (a,b){ return a[zColumn] - b[zColumn] })					
+			.text("")
+			.attr("class", "label2")
+			.attr("x",50).attr("y",380)
+			.style("font-size", "2em")
+			.transition()
+				.delay(function (d,i){return i*10})
+				.duration(10)
+				.text(function(d){return d[ BycategoryColumn ]})
+				.on("end", function (){ d3.select(this).style("display", "none") } )
+			;
+			
+			svg.selectAll("none").data( dataset )
+			.enter()
+			.append("text")	
+			.sort( function (a,b){ return a[zColumn] - b[zColumn] })					
+			.text("")
+			.attr("class", "label4")
+			.attr("x",50).attr("y",460)
+			.style("font-size", "2em")
+			.transition()
+				.delay(function (d,i){return i*10})
+				.duration(10)
+				.text(function(d){return d3.format(",d")(d[ zColumn ])})
+				.on("end", function (){ d3.select(this).style("display", "none") } )
+				
+			;
+		// -----------------------------------------------------------------------------------------------------------------------------
+		// bar chart
+		// -----------------------------------------------------------------------------------------------------------------------------
+	
+		var Barmargin = {
+			left: margin.left ,
+			top: margin.top + sizeChart.ht + 5
+		};
+	
+		var sizeBarChart = {
+			wt: sizeChart.wt,
+			ht: 180
+		};
+		var barSvg = d3.select("svg").append("g").attr( "transform", "translate(" + Barmargin.left + "," + Barmargin.top + ")" );
+	
+		var ymin = d3.min(dataset, function (d){ return d[zColumn] });		
+		var ymax = d3.max(dataset, function (d){ return d[zColumn] });  //console.log(ymax);
+
+		var yScale = d3.scaleLinear().domain([ymin, ymax]).range([sizeBarChart.ht, 0]);
+		var dataset_filtered_sorted = dataset.filter( function (d){return(d[zColumn] > 2000000?  true:  false) } ).sort( function (a,b){ return a[xColumn] -b[xColumn]; } );
+		console.log(dataset_filtered_sorted);
+		console.log(dataset_filtered_sorted.length);
+		var xScale = d3.scaleBand()
+					.domain( dataset_filtered_sorted.map( function (d){ return d.geonameid } ) 
+					)
+					.range( [0, sizeBarChart.wt])					
+					;
+					
+		console.log(xScale.domain());
+		var yAxis = d3.axisLeft( yScale ).ticks(5).tickFormat(d3.format(".0s"));
+		var xAxis = d3.axisBottom( xScale );
+		barSvg.append("g").attr("class", "bar-xaxis").attr( "transform", "translate( 0," + sizeBarChart.ht + ")" )
+			.call(xAxis);
+		barSvg.append("g")
+			.call(yAxis);
+
+		barSvg.append("g").selectAll(".bar").data(dataset_filtered_sorted)
+		.enter()
+			.append("rect")
+			.attr( "class", function (d,i){ return "r" + d.geonameid ;} )
+			.attr("x", function (d){return xScale(d.geonameid); } )
+			.attr("y", function (d){ return yScale(d[zColumn]); })
+			.attr("width", xScale.bandwidth())
+			.attr("height", function (d){ return sizeBarChart.ht - yScale(d[zColumn]) ;})
+			.style("fill", function (d){ return ColorRange( d[ zColumn ] )  })
+			.style("fill-opacity", 0.5)
+			.style("stroke", "#000000")		
+			.style("stroke-width", "0.02em")		
+			.on( "mouseover", function (d){  
+					d3.select( ".c" + d.geonameid )
+					.transition()
+						.duration(500)
+						.attr("r",  function (){ return rScale( d[ zColumn ]) + 10 }  )
+						.on("end",  function () {  d3.select(this).transition()
+										.delay(1000)
+										.duration(500)
+										.attr("r", function (){ return rScale( d[ zColumn ]) })
+									}
+						);		
+					
+					
+					d3.select(this)
+					.transition()
+						.duration(100)
+						.ease(d3.easeLinear)
+						.style("fill", "#FFFFFF")						
+					.transition()
+						.delay(3000)
+						.duration(100)
+						.ease(d3.easeLinear)
+						.style("fill", function (d){ return ColorRange( d[ zColumn ] )  })						
+					;								
+												
+					svg.select(".label2").text( d[ BycategoryColumn ] ).style("font-size", "2em");
+					svg.select(".label4").text( d3.format(",d")(d[ zColumn ]) ).style("font-size", "2em");
+				}
+			)			
+			;	
+	}	
+	 
+	 function pre(d){		
+		if( d[xColumn] == "" || d[yColumn] == "" || d[zColumn] == "" || d[BycategoryColumn] == "" ){ return null; }
+		if( d[xColumn] == undefined || d[yColumn] == undefined || d[zColumn] == undefined || d[BycategoryColumn] == undefined ){ return null; }
+	 
+		d[xColumn] = +d[xColumn];
+		d[yColumn] = +d[yColumn];
+		d[zColumn] = +d[zColumn];
+		
+		if( d[zColumn] < 200000 ){ return null; }
+		return d;
+	 }
+	 	 	
+	d3.csv( "cities_100k.csv", pre, Scatterplot );
+	
+	</script>

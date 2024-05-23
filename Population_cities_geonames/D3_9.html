@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>D3 Example</title>
+    <script type="text/javascript" src="https://d3js.org/d3.v4.js"></script> 
+    <style>
+	body {
+		//margin: auto;
+		width: 50%;	
+		font-size: 1.15em;
+		font-family: "Times New Roman";			
+	}
+	svg {
+		border-style: solid;
+		border-width: 2px;
+		//background-color: #000;
+	}
+	.axis {
+		shape-rendering: crispEdges;
+	}
+	circle{
+		stroke-width:1;
+		//fill:#000;
+	}
+	.labels {
+		font-size: 0.8em;
+		font-family: serif;		
+	}
+	.domain{
+		stroke:#000000;
+	}
+    </style>
+</head>
+ <body>
+
+	<script>
+	
+	// create the svg canvas
+	var svgCanvas = d3.select("body").append("svg")
+		.attr( "width", "1500" )
+		.attr( "height", "800" )
+
+	// --------------------------- User defined --------------------------------
+	// Select the cols names of the dataset to plot; extramarginofDomain
+	// ---------------------------------------------------------------------------
+	// name,latitude,longitude,population
+	var xColumn = "longitude"; 
+	var yColumn = "latitude";
+	var zColumn = "population";
+	var BycategoryColumn = "name";
+	var extramarginofDomain = 10;	//  +/- %	
+	var xPixelRange = 1300;		// 500px by 500px
+	var yPixelRange = 700;		// 500px by 500px
+	var cirRadiusRange = 15 ;
+	var arrayColorRange = [
+		{  range:10000000 , color:"#FF0000" }, // red
+		{  range:  5000000 , color:"#FF66cc" }, // pink
+		{  range:  2000000 , color:"#FF6600" }, // orange
+		{  range:              0 , color:"#000" }	 // black		
+		//{  range:  1000000 , color:"#FFFF00" }, // yellow		
+		//{  range:    500000 , color:"#009900" }, // green		
+		//{  range:    200000 , color:"#0066FF" }, // blue		
+		//{  range:    100000,  color:"#cc33FF" }, // purple 
+		];
+		
+
+	//
+	// calculation derived from user's inputs above
+	//
+	var extraUpperRange = 1 + extramarginofDomain/100;		// + %
+	var extraLowerRange = 1 + extramarginofDomain/100;		// +% for negative values domain
+	//var extraLowerRange = 1 - extramarginofDomain/100;		// -% for positive values domain
+
+	function fillColor( datum ){
+		if( datum[ zColumn ] > 10000000 ){ return "#FF0000" }
+		else if( datum[ zColumn ] > 5000000 ){ return "#00FF00" }
+		else if( datum[ zColumn ] > 1000000 ){ return "#0000FF" }
+		else if( datum[ zColumn ] > 500000 ){ return "#FFFF00" }
+		else { return "#000" }
+	}
+	function ColorRange( value ){	
+		for( var i=0; i<arrayColorRange.length; i++ ){
+			if( value >  arrayColorRange[i].range ){ return arrayColorRange[i].color; }
+		}	
+	}
+	
+
+	function Scatterplot( dataset ) {	
+		var xmin = d3.min(dataset, function (d){ return d[xColumn] }) * extraLowerRange ; 		
+		var xmax = d3.max(dataset, function (d){ return d[xColumn] }) * extraUpperRange;  
+		var ymin = d3.min(dataset, function (d){ return d[yColumn] }) * extraLowerRange;  		
+		var ymax = d3.max(dataset, function (d){ return d[yColumn] }) * extraUpperRange;
+		var rmin  = d3.min(dataset, function (d){ return d[zColumn] }) * extraLowerRange; 	
+		var rmax = d3.max(dataset, function (d){ return d[zColumn] }) * extraUpperRange;
+		//
+		// setup scales and axis
+		//
+		var xScale = d3.scaleLinear().domain( [xmin,xmax] ).range( [0, xPixelRange] );
+		var yScale = d3.scaleLinear().domain( [ymax,ymin] ).range( [0, yPixelRange] );			
+		var rScale = d3.scaleSqrt().domain( [0, rmax] ).range( [0, cirRadiusRange] );			
+		//~ var CategoryScale = d3.scaleOrdinal(d3.schemeCategory10);		
+		// var CategoryScale = d3.scaleOrdinal(d3.schemeCategory10);		
+		//
+		var yAxis = d3.axisLeft( yScale );
+		var xAxis = d3.axisBottom( xScale );
+
+		//~ // create the svg canvas
+		 //~ var svgCanvas = d3.select("body").append("svg")
+			//~ .attr( "width", "900" )
+			//~ .attr( "height", "600" )
+		
+		var pointerDetails = svgCanvas.append("text").text("mouse over points to see data").attr("x", 100).attr("y", 100).attr("class", "labels");
+		
+		// 
+		// AXIS
+		// x-axis
+		svgCanvas.append("g").attr( "transform", "translate(50,750)")
+			.call(xAxis);
+		svgCanvas.append("g").attr( "transform", "translate(50,50)")
+			.call(xAxis);
+		// x-axis label
+		svgCanvas.append("text").text(xColumn).attr("x", 750).attr("y", 730).attr("text-anchor", "end").attr("class", "labels");
+		//
+		// AXIS
+		// y-axis
+		svgCanvas.append("g").attr( "transform", "translate(50,50)")
+			.call(yAxis);
+		svgCanvas.append("g").attr( "transform", "translate(1360,50)")
+			.call(yAxis);
+		// y-axis label
+		svgCanvas.append("text").text(yColumn).attr("y", 70).attr("x", -400).attr("text-anchor", "middle").attr("class", "labels").attr("transform", "rotate(-90)");
+		
+		//
+		// plot area
+		//
+		var plotArea = svgCanvas.append("g").attr( "transform", "translate(50,50)");
+
+		// data bind and update
+		var cir = plotArea.selectAll("circle").data( dataset );
+		
+		cir.enter().append("circle")
+		.merge( cir )
+		.attr( "cx", function (d){return xScale(d[ xColumn ])} )
+		.attr( "cy", function (d){return yScale(d[ yColumn ])} )
+		.attr( "r", function (d){return rScale( d[ zColumn ])} )
+		//.attr( "r", "2" )
+		//.style("fill", function (d){ return CategoryScale(d[ BycategoryColumn ]) })
+		//.style("stroke", function (d){ return CategoryScale(d[ BycategoryColumn ]) })
+		.style("stroke", "#000" )
+		.style("fill", function (d){ return ColorRange( d[ zColumn ] )  } )
+		.attr("class", function (d){ return d[ BycategoryColumn ] } )
+		.on( "mouseover", function (d){  
+						d3.select(this).transition()
+							.duration(400)
+							.attr("r", 10)
+							.style("stroke", "#FF0000")
+							
+							.on("end",  function () {  d3.select(this).transition()
+													.duration(400)
+													.attr("r", function (){ return rScale( d[ zColumn ]) })
+													.style("stroke", "#000" ) }
+							);
+						
+						
+						pointerDetails.text( xColumn + ": " + d[ xColumn ] + "   " + yColumn + ": " +d[ yColumn ] + "  " +zColumn + ": " + d[ zColumn ] + " :  " + d[ BycategoryColumn ]);
+						
+						}
+		)
+		.on("mouseleave", function (d){d3.selectAll("." + d[ BycategoryColumn ] )  } );
+		
+		
+	}	
+	 
+	 function pre(d){
+		// check for missing values
+		//console.log(d);
+		if( d[xColumn] == "" || d[yColumn] == "" || d[zColumn] == "" || d[BycategoryColumn] == "" ){ return null; }
+		if( d[xColumn] == undefined || d[yColumn] == undefined || d[zColumn] == undefined || d[BycategoryColumn] == undefined ){ return null; }
+	 
+		d[xColumn] = +d[xColumn];
+		d[yColumn] = +d[yColumn];
+		d[zColumn] = +d[zColumn];
+		
+		if( d[zColumn] < 100000 ){ return null; }
+		
+		return d;
+	 }
+	 
+	 function render( dataArray ){
+		//console.log( dataArray );
+		Scatterplot( dataArray );
+	 }
+	 
+	//d3.csv( "population_100000.csv", pre, render );
+	d3.csv( "cities_100k.csv", pre, render );
+	//d3.csv( "test.csv", pre, render );
+	  
+	</script>
+
+	<!--  Body text goes here -->
+	<!--  Body text goes here -->
+	<p>
+	A simple scatter plot using the dataset from  http://www.geonames.org.  This plot shows the distribution of some of the world cities' population.  This dataset has about 4000 datum, and it is interesting to see that the continents are recognizable even without mapping the plot 
+	to a globe map.
+	</p>
+
+
+
+
+
+  </body>
+</html>

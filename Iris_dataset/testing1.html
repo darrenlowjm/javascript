@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>D3 Example</title>
+    <script type="text/javascript" src="https://d3js.org/d3.v4.js"></script> 
+    <style>
+    	textarea {
+		/*background-color : #e6f7ff;*/
+		overflow : scroll;		
+	}
+	body {
+		font-size: 1.15em;
+		font-family: "Times New Roman";			
+	}	
+	svg {
+		border-style: solid;
+		border-width: 2px;
+	}
+	.axis {
+		shape-rendering: crispEdges;
+	}
+	circle{
+		stroke-width:2;
+		fill:#FFF;
+	}
+	.labels {
+		font-size: 0.8em;
+		font-family: serif;		
+	}
+	.domain{
+		stroke:#000000;
+	}
+	.heading {
+		font-size: 2.5em;
+		font-family: "Times New Roman";	
+	}
+	code {
+		color: blue;
+	}
+
+    </style>
+</head>
+ <body>
+	<div class='heading' style="margin-left:200px; ">
+	A classical dataset
+	</div>
+	<br>
+	<br>
+	
+
+	<script>
+	
+	// create the svg canvas
+	var svgCanvas = d3.select("body").append("svg")
+		.attr( "width", "800" )
+		.attr( "height", "550" )
+
+	// --------------------------- User defined --------------------------------
+	// Select the cols names of the dataset to plot; extramarginofDomain
+	// ---------------------------------------------------------------------------
+	var xColumn = "SepalLen"; 
+	var yColumn = "PetalLen";
+	var zColumn = "SepalWidth";
+	var BycategoryColumn = "Flower";
+	var extramarginofDomain = 10;	//  +/- 20%	
+	var xPixelRange = 700;		// 500px by 500px
+	var yPixelRange = 400;		// 500px by 500px
+	var cirRadiusRange = 10 ;
+	//
+	// calculation derived from user's inputs above
+	//
+	var extraUpperRange = 1 + extramarginofDomain/100;		// + 20%
+	var extraLowerRange = 1 - 2*extramarginofDomain/100;		// - 20%
+
+	function Scatterplot( dataset ) 
+	{	
+		var xmin = d3.min(dataset, function (d){ return d[xColumn] }) * extraLowerRange ; 		
+		var xmax = d3.max(dataset, function (d){ return d[xColumn] }) * extraUpperRange;  
+		var ymin = d3.min(dataset, function (d){ return d[yColumn] }) * extraLowerRange;  		
+		var ymax = d3.max(dataset, function (d){ return d[yColumn] }) * extraUpperRange;
+		var rmin  = d3.min(dataset, function (d){ return d[zColumn] }) ; 	
+		var rmax = d3.max(dataset, function (d){ return d[zColumn] }) ;
+		//
+		// setup scales and axis
+		//
+		var xScale = d3.scaleLinear().domain( [xmin,xmax] ).range( [0, xPixelRange] );
+		var yScale = d3.scaleLinear().domain( [ymax,ymin] ).range( [0, yPixelRange] );			
+		var rScale = d3.scaleSqrt().domain( [0, rmax] ).range( [0, cirRadiusRange] );			
+		var CategoryScale = d3.scaleOrdinal(d3.schemeCategory10);		
+		//
+		var yAxis = d3.axisLeft( yScale );
+		var xAxis = d3.axisBottom( xScale );
+
+		//~ // create the svg canvas
+		 //~ var svgCanvas = d3.select("body").append("svg")
+			//~ .attr( "width", "900" )
+			//~ .attr( "height", "600" )
+		
+		var pointerDetails = svgCanvas.append("text").text("(*) mouse over points to see data").attr("x", 100).attr("y", 100).attr("class", "labels");
+		
+		// 
+		// AXIS
+		// x-axis
+		svgCanvas.append("g").attr( "transform", "translate(50,450)")
+			.call(xAxis);
+		// x-axis label
+		svgCanvas.append("text").text(xColumn).attr("x", 350).attr("y", 500).attr("text-anchor", "end").attr("class", "labels");
+		//
+		// AXIS
+		// y-axis
+		svgCanvas.append("g").attr( "transform", "translate(50,50)")
+			.call(yAxis);
+		// y-axis label
+		svgCanvas.append("text").text(yColumn).attr("y", 70).attr("x", -300).attr("text-anchor", "middle").attr("class", "labels").attr("transform", "rotate(-90)");
+		
+		//
+		// plot area
+		//
+		var plotArea = svgCanvas.append("g").attr( "transform", "translate(50,50)");
+
+		// data bind and update
+		var cir = plotArea.selectAll("rect").data( dataset );
+		
+		cir.enter().append("circle")
+		.merge( cir )
+		.attr( "cx", function (d){return xScale(d[ xColumn ])} )
+		
+		//.attr( "cy", function (d){return yScale(d[ yColumn ])} )
+		.attr( "cy", 400 )
+		
+		//.attr( "r", function (d){return rScale( d[ zColumn ])} )
+		.attr( "r", 5 )
+		//.style("fill", function (d){ return CategoryScale(d[ BycategoryColumn ]) })
+		.style("stroke", function (d){ return CategoryScale(d[ BycategoryColumn ]) })
+		.attr("class", function (d){ return d[ BycategoryColumn ] } )
+		.on( "mouseover", function (d){  
+						d3.select(this).transition()
+							.duration(400)
+							//.attr("r", 10)
+							.style("stroke", "#FF0000")
+							.on("end",  function () {  d3.select(this).transition()
+													.duration(400)
+													//.attr("r", function (){ return rScale( d[ zColumn ]) })
+													.style("stroke", function (d){ return CategoryScale(d[ BycategoryColumn ]) })	  } );
+						
+						d3.selectAll( "." + d[ BycategoryColumn ] ).style("fill", "#000000");
+						pointerDetails.text( xColumn + ": " + d[ xColumn ] + " " + yColumn + ": " +d[ yColumn ] + "  " +zColumn + ": " + d[ zColumn ] + " :  " + d[ BycategoryColumn ]);
+						//pointerDetails.text( xColumn + ": " + d[ xColumn ] ). + yColumn + ": " +d[ yColumn ] + "  " +zColumn + ": " + d[ zColumn ] + " :  " + d[ BycategoryColumn ]);
+						
+						}
+		)
+		.on("mouseleave", function (d){d3.selectAll("." + d[ BycategoryColumn ] ).style("fill", "#FFFFFF");  } )
+		.transition()
+			.duration(1000)
+			.delay( function (d){ 
+						switch( d[ BycategoryColumn ] ){
+							case  "Iris-setosa": return 500;
+							case  "Iris-versicolor": return 1300;
+							case  "Iris-virginica": return 2200;
+						};						
+					} 
+			)
+			.ease(d3.easeBackOut)	
+			.attr( "cx", function (d){return xScale(d[ xColumn ])} )
+			.attr( "cy", function (d){return yScale(d[ yColumn ])} )
+		;		
+	}	
+	 
+	 function pre(d){
+		d[xColumn] = +d[xColumn];
+		d[yColumn] = +d[yColumn];
+		d[zColumn] = +d[zColumn];
+		//d.darren = d.Flower.split("-")[0];
+		//console.log(d);fdd
+		return d;
+	 }
+	 
+	d3.csv( "iris.data", pre, Scatterplot );
+	  
+	</script>
+
+	<!--  Body text goes here -->
+	<!--  Body text goes here -->
+	<p>
+	<div style="margin-left:10px; width:800px">
+	
+	This is something that I started off with as a beginner D3 learner.  Using the classic iris dataset, which is a simple dataset describing flower properties such as petal length etc.
+	I am simply plotting one property vs another, to discover regression patterns.  The colors of the point represent the three category of flower types.  Using simple mouseover and 
+	transition methods, I am able add some animation to make the plot a little interactive.
+	Enjoy...
+	</p>
+	
+	Here is a sniplet of the dataset, which I download for free at https://archive.ics.uci.edu/ml/datasets/Iris
+	</div>
+	
+	<blockquote>
+	<textarea cols='55' rows='10'>
+SepalLen,SepalWidth,PetalLen,PetalWidth,Flower
+5.1,3.5,1.4,0.2,Iris-setosa
+4.9,3.0,1.4,0.2,Iris-setosa
+4.7,3.2,1.3,0.2,Iris-setosa
+4.6,3.1,1.5,0.2,Iris-setosa
+5.0,3.6,1.4,0.2,Iris-setosa
+5.4,3.9,1.7,0.4,Iris-setosa
+4.6,3.4,1.4,0.3,Iris-setosa
+5.0,3.4,1.5,0.2,Iris-setosa
+4.4,2.9,1.4,0.2,Iris-setosa
+4.9,3.1,1.5,0.1,Iris-setosa
+5.4,3.7,1.5,0.2,Iris-setosa
+4.8,3.4,1.6,0.2,Iris-setosa
+4.8,3.0,1.4,0.1,Iris-setosa
+4.3,3.0,1.1,0.1,Iris-setosa
+5.8,4.0,1.2,0.2,Iris-setosa
+5.7,4.4,1.5,0.4,Iris-setosa
+5.4,3.9,1.3,0.4,Iris-setosa
+5.1,3.5,1.4,0.3,Iris-setosa
+5.7,3.8,1.7,0.3,Iris-setosa
+5.1,3.8,1.5,0.3,Iris-setosa
+...etc etc
+	</textarea>
+	</blockquote>
+
+<blockquote>
+<textarea cols='98' rows='96'>
+	
+	
+	var svgCanvas = d3.select("body").append("svg")
+		.attr( "width", "800" )
+		.attr( "height", "550" )
+	var xColumn = "SepalLen"; 
+	var yColumn = "PetalLen";
+	var zColumn = "SepalWidth";
+	var BycategoryColumn = "Flower";
+	var extramarginofDomain = 10;	//  +/- 20%	
+	var xPixelRange = 700;		// 500px by 500px
+	var yPixelRange = 400;		// 500px by 500px
+	var cirRadiusRange = 10 ;
+	var extraUpperRange = 1 + extramarginofDomain/100;		// + 20%
+	var extraLowerRange = 1 - 2*extramarginofDomain/100;		// - 20%
+
+	function Scatterplot( dataset ) 
+	{	
+		var xmin = d3.min(dataset, function (d){ return d[xColumn] }) * extraLowerRange ; 		
+		var xmax = d3.max(dataset, function (d){ return d[xColumn] }) * extraUpperRange;  
+		var ymin = d3.min(dataset, function (d){ return d[yColumn] }) * extraLowerRange;  		
+		var ymax = d3.max(dataset, function (d){ return d[yColumn] }) * extraUpperRange;
+		var rmin  = d3.min(dataset, function (d){ return d[zColumn] }) ; 	
+		var rmax = d3.max(dataset, function (d){ return d[zColumn] }) ;
+		var xScale = d3.scaleLinear().domain( [xmin,xmax] ).range( [0, xPixelRange] );
+		var yScale = d3.scaleLinear().domain( [ymax,ymin] ).range( [0, yPixelRange] );			
+		var rScale = d3.scaleSqrt().domain( [0, rmax] ).range( [0, cirRadiusRange] );			
+		var CategoryScale = d3.scaleOrdinal(d3.schemeCategory10);		
+		var yAxis = d3.axisLeft( yScale );
+		var xAxis = d3.axisBottom( xScale );
+		
+		var pointerDetails = svgCanvas.append("text").text("(*) mouse over points to see data")
+						.attr("x", 100).attr("y", 100).attr("class", "labels");
+		// x-axis
+		svgCanvas.append("g").attr( "transform", "translate(50,450)")
+			.call(xAxis);
+		// x-axis label
+		svgCanvas.append("text").text(xColumn).attr("x", 350).attr("y", 500)
+			.attr("text-anchor", "end").attr("class", "labels");
+		svgCanvas.append("g").attr( "transform", "translate(50,50)")
+			.call(yAxis);
+		// y-axis label
+		svgCanvas.append("text").text(yColumn).attr("y", 70).attr("x", -300)
+			.attr("text-anchor", "middle").attr("class", "labels")
+			.attr("transform", "rotate(-90)");
+		var plotArea = svgCanvas.append("g").attr( "transform", "translate(50,50)");
+
+		var cir = plotArea.selectAll("circle").data( dataset );
+		cir.enter().append("circle")
+		.merge( cir )
+		.attr( "cx", function (d){return xScale(d[ xColumn ])} )
+		.attr( "cy", 400 )
+		.attr( "r", 5 )
+		.style("stroke", function (d){ return CategoryScale(d[ BycategoryColumn ]) })
+		.attr("class", function (d){ return d[ BycategoryColumn ] } )
+		.on( "mouseover", function (d){  
+			d3.select(this).transition()
+			.duration(400)
+			.style("stroke", "#FF0000")
+			.on("end",  function () {  d3.select(this).transition()
+					.duration(400)
+					.style("stroke", function (d){ 
+					return CategoryScale(d[ BycategoryColumn ]) })	  } );
+						
+				d3.selectAll( "." + d[ BycategoryColumn ] ).style("fill", "#000000");
+				pointerDetails.text( xColumn + ": " + d[ xColumn ] + " " 
+					+ yColumn + ": " +d[ yColumn ] + "  " + zColumn 
+					+ ": " + d[ zColumn ] + " :  " + d[ BycategoryColumn ]);
+				}
+		)
+		.on("mouseleave", function (d){
+			d3.selectAll("." + d[ BycategoryColumn ] ).style("fill", "#FFFFFF");  }
+		)
+		.transition()
+			.delay(500)
+			.duration( 2000 )
+			.ease(d3.easeBackOut)	
+			.attr( "cx", function (d){return xScale(d[ xColumn ])} )
+			.attr( "cy", function (d){return yScale(d[ yColumn ])} )
+		;		
+	}	
+	 
+	 function pre(d){
+		d[xColumn] = +d[xColumn];
+		d[yColumn] = +d[yColumn];
+		d[zColumn] = +d[zColumn];
+		return d;
+	 }
+	 
+	d3.csv( "iris.data", pre, Scatterplot );	  
+	
+</textarea>
+</blockquote>
+
+
+
+
+	
+
+
+  </body>
+</html>

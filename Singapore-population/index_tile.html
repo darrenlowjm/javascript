@@ -1,0 +1,218 @@
+<html>
+<head>
+    <title>D3 Example</title>
+    <script type="text/javascript" src="https://d3js.org/d3.v4.js"></script> 
+    <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+    <!-- <script src="https://d3js.org/d3.v4.min.js"></script> -->
+    <style>
+	rect:hover {			
+		stroke-width : 0.1em;
+		stroke : black;	
+	}
+	.axis {
+		shape-rendering: crispEdges;
+	}
+	svg {
+		/*border: 1px solid yellow;*/ 
+	}
+	code {
+		color: blue;
+	}
+	body {
+		font-size: 1.15em;
+		font-family: "Times New Roman";			
+	}	
+	a {
+		text-decoration: underline;
+		color: blue;
+	}
+	.labels {
+		font-size: 1.3em;
+		font-family: serif;
+		fill: #000;
+	}
+	div.heading {
+		font-size: 2.5em;
+		font-family: "Times New Roman";	
+		width:1300px; 
+		text-align:center;
+		margin:auto; 
+		/*border: 1px dotted green; */
+	}
+	div.content {
+		margin:auto; 
+		width:1300px; 
+		text-align:center;
+		/*border: 1px dotted pink; 	*/
+					
+	}
+	div.chart {
+		margin:auto; 
+		width:1300px; 
+		text-align:center;
+		/*border: 1px dotted blue; */
+	}
+	div.content2 {
+		margin:auto; 
+		width:1300px; 
+		/*clear:left;*/
+		text-align:center;
+		/*border: 1px solid black; */
+	}
+	div.footer {
+		margin:auto; 
+		width:1300px; 
+		/*clear:left;*/
+		text-align:center;
+		font-size: 0.8em;
+		/*border: 1px solid purple; */
+	}
+
+
+    </style>
+</head>
+ <body>
+	<div class='heading'>Singapore residents Population growth since 1960</div>
+	<br>
+	
+	<div class="content">
+		<div class="chart"></div>
+	</div>
+	
+	<br>
+
+	
+	<script>
+	// -----------------------------------------------------------------------------
+	// User defined constants
+	// -----------------------------------------------------------------------------
+	//
+	var sizeSvg 	= { wt:800, ht:850 };
+	var sizeChart 	= { wt:700, ht:750 };		
+	//
+	// calculated based on above settings
+	//
+	var margin 	= { 
+		left: (sizeSvg.wt - sizeChart.wt)/2 , 
+		top: (sizeSvg.ht - sizeChart.ht)/2 
+	};	
+	// create the svg element <svg><g>
+	 var svg = d3.select("div.chart").append("svg")
+		.attr( "width",  sizeSvg.wt )
+		.attr( "height",  sizeSvg.ht ) ;
+
+	//
+	var chartG = svg.append("g").attr("class", "chartG").attr( "transform", "translate(" + margin.left + "," + margin.top + ")" );	
+	var filename = "singapore-residents-by-age-group-ethnic-group-and-sex-end-june-annual.csv";
+
+	function row(d){	
+			//year,resident,age,population
+			if( d.resident.search("Total Residents") == -1 ){return null;}	// keep only the total resident pop	
+			if( d.age.search("Over") != -1 ){return null;}	// remove the "& over rows"				
+			d.population = Number.isFinite(+d.population)  ? +d.population : 0 ;		// check for empty strings or strings. Set to 0.		
+			return d;	
+	}	
+
+
+	
+	d3.csv(filename, row, function(dataset){
+		// remove entires related to "total residents"
+		console.log(dataset);
+		
+		years = d3.map(dataset, function(d){ return d.year }).keys();  years.push("2017","2018","2019","2020","2021","2022","2023");
+		age = d3.map(dataset, function(d){ return d.age }).keys();
+		console.log(years);
+		
+		var yscale = d3.scaleBand()
+			.domain(years)
+			.range([sizeChart.ht,0]);
+		//
+		var xscale = d3.scaleBand()
+			.domain(age)
+			.range([0,sizeChart.wt]);
+		//
+		var xaxis = d3.axisBottom(xscale);
+		chartG.append("g").attr("class", "xaxis").attr("transform", "translate(0," +sizeChart.ht + ")" ).style("font-size", 10)
+			.call( xaxis );
+		d3.selectAll(".xaxis text").attr("transform", "translate(-20,20)rotate(-45)");
+		
+		var yaxis = d3.axisLeft(yscale);
+		chartG.append("g").attr("class", "yaxis").attr("transform", "translate(0,0)" ).style("font-size", 10)
+			.call( yaxis );
+
+		svg.append("text").attr("class", "labels").attr("x", 50).attr("y", 20).text("move mouse over...");
+		
+		years.forEach( function(eachyear){
+			var dataset_filtered_by_year = dataset.filter( function(d){return d.year==eachyear }  );
+			var pop_extent = d3.extent( dataset.filter(function(d){return d.population==0? false:true}), function(d){ return d.population } );
+			console.log(pop_extent);	
+		
+			//~ var colorscale = d3.scaleSequential()
+				//~ .domain(pop_extent)
+				//~ .interpolator(d3.interpolatePlasma);
+				//~ //.interpolator(d3.interpolateYlOrRd);
+				
+			var red = [
+				"#280000",
+				"#400000",
+				"#580000",
+				"#800000",
+				"#B00000",
+				"#D80000",
+				"#FF0000"
+			]	;
+				
+			var colorscale = d3.scaleQuantize()
+				.domain(pop_extent )
+				.range(d3.schemeSet2);
+				//.range(["black","silver"]);
+				//.range(["black","dimgray","silver","gainsboro"]);
+		
+			chartG.selectAll(".something").data(dataset_filtered_by_year).enter()
+				.append("rect")
+				.attr("x", function(d){ return xscale(d.age)  })
+				.attr("y", function(d){ return yscale(d.year)  })
+				.attr("width", xscale.bandwidth())
+				.attr("height", yscale.bandwidth())
+				.style("fill", function(d){ return colorscale(d.population)  })
+				.on("mouseover", function(d){
+						d3.select(".labels")
+						.text( d.year + "    (" + d.age + ")    " + d3.format(",d")(d.population) )
+					}
+				
+				)
+			;
+		
+		
+		
+		
+		});	//end of years.foreach()
+	
+	
+	} ); // end of open csv
+
+
+	
+	</script>
+
+
+	<!--  Body text goes here -->
+	<!--  Body text goes here -->
+
+	<br>
+
+<div class="content2"><img src="color.jpg"></div>
+
+<div class="footer">
+<p style="text-decoration:underline">Conditions of use:</p>
+ Datasets downloaded from https://data.gov.sg/dataset on Nov 2016.
+<br>
+ Any analysis or transformation of data made here shall not be attributed to the Singapore Government or its Statutory Boards.
+ <br> 
+The datasets provided by the Singapore Government and its Statutory Boards via Data.gov.sg are governed by the Terms of Use available at https://data.gov.sg/site-terms. 
+To the fullest extent permitted by law, the Singapore Government and its Statutory Boards are not liable for any damage or loss of any kind caused directly 
+or indirectly by the use of the datasets or any derived analyses or applications.
+</div>
+
+  </body>
+</html>

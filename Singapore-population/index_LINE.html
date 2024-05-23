@@ -1,0 +1,287 @@
+<html>
+<head>
+    <title>D3 Example</title>
+    <script type="text/javascript" src="https://d3js.org/d3.v4.js"></script> 
+    <!-- <script src="https://d3js.org/d3.v4.min.js"></script> -->
+    <style>
+	.yaxis path{
+		stroke:#fff;
+	}
+	.lineR {
+		stroke-width:0.1em;
+		fill: none;
+		stroke:skyblue;
+	}
+	.lineL {
+		stroke-width:0.1em;
+		fill: none;
+		stroke:pink;
+	}
+	rect {
+		stroke:black;
+		stroke-width:0.02em;
+		fill-opacity:0.5;
+	}
+	polygon {
+		stroke:black;
+		stroke-width:0.02em;
+		fill:white;
+		fill-opacity: 0.5;
+	}
+	.axis {
+		shape-rendering: crispEdges;
+	}
+	svg {
+		/*border: 1px solid yellow; */
+	}
+	code {
+		color: blue;
+	}
+	body {
+		font-size: 1.15em;
+		font-family: "Times New Roman";			
+	}	
+	a {
+		text-decoration: underline;
+		color: blue;
+	}
+	.labels {
+		font-size: 0.65em;
+		font-family: serif;
+		fill: #000;
+	}
+	.yearname,.sex {
+		font-size: 2.5em;
+		font-family: serif;
+		fill: #606060;
+	}
+	div.heading {
+		font-size: 2.5em;
+		font-family: "Times New Roman";	
+		width:1000px; 
+		text-align:center;
+		margin:auto; 
+		/*border: 1px dotted green; */
+	}
+	div.content {
+		margin:auto; 
+		width:1000px; 
+		text-align:center;
+		border: 1px solid black; 	
+		height: 550px;				
+	}
+	div.chart {
+		margin:auto; 
+		width:900px; 
+		text-align:center;
+		/*border: 1px dotted blue; */
+	}
+	div.content2 {
+		margin:auto; 
+		width:1000px; 
+		clear:left;
+		text-align:center;
+		/*border: 1px solid black; */
+	}
+	div.footer {
+		margin:auto; 
+		width:1000px; 
+		clear:left;
+		text-align:center;
+		font-size: 0.8em;
+		/*border: 1px solid purple; */
+	}
+	g {
+		border: 2px solid black; 
+	}
+
+
+    </style>
+</head>
+ <body>
+	<div class='heading'>Singapore residents Population growth since 1960</div>
+	<br>
+	
+	<div class="content">
+		<div class="chart"></div>
+	</div>
+	
+	<br>
+
+	
+	<script>
+	// -----------------------------------------------------------------------------
+	// User defined constants
+	// -----------------------------------------------------------------------------
+	//
+	var sizeSvg 	= { wt:800, ht:600 };
+	var sizeChart 	= { wt:300, ht:400 };		
+	//
+	// calculated based on above settings
+	//
+	var margin 	= { 
+		left: (sizeSvg.wt - sizeChart.wt)/2 , 
+		top: (sizeSvg.ht - sizeChart.ht)/2 
+	};	
+	// create the svg element <svg><g>
+	 var svg = d3.select("div.chart").append("svg")
+		.attr( "width",  sizeSvg.wt )
+		.attr( "height",  sizeSvg.ht ) ;
+
+	
+
+	//
+	//var chartG = svg.append("g").attr("class", "chartG").attr( "transform", "translate(" + margin.left + "," + margin.top + ")" );	
+	var chartG = svg.append("g").attr("class", "chartG").attr( "transform", "translate(50,50)");	
+	//
+	//var chartLeft = chartG.append("g").attr("class", "chartLeft").attr("transform", "translate(" + sizeChart.wt + ",0 )" );
+	var chartLeft = chartG.append("g").attr("class", "chartLeft").attr("transform", "translate(0,0)"  );
+	var chartRight = chartG.append("g").attr("class", "chartRight").attr("transform", "translate(" + (sizeChart.wt + 50) + ",0)");
+	
+	var filename = "singapore-residents-by-age-group-ethnic-group-and-sex-end-june-annual.csv";
+
+	function row(d){	
+			//year,resident,age,population
+			if( d.age.search("Over") != -1 ){return null;}	// remove the "& over rows"			
+			d.population = Number.isFinite(+d.population)  ? +d.population : 0 ;		// check for empty strings or strings. Set to 0.		
+			return d;	
+	}	
+
+	
+	d3.csv(filename, row, function(dataset){
+		// remove entires related to "total residents"
+		dataset = dataset.filter( function(d){ return d.resident.toLowerCase().search("male") == -1 ?  false: true} );
+		console.log(dataset);
+		var pop_extent = d3.extent( dataset, function(d){ return d.population; } );
+		console.log(pop_extent);	
+		pop_extent[1] += 50000;
+		
+		// define to x-axis  (left and right side) 
+		// mayb no need to define 2 scales? Can simply negate .
+		xscaleR = d3.scaleLinear()
+			.domain(pop_extent)
+			.range([0,sizeChart.wt])
+			//.nice()
+			;
+			
+		xscaleL = d3.scaleLinear()
+			.domain(pop_extent)
+			.range([sizeChart.wt,0])
+			.nice()
+			;
+		
+		yscale = d3.scalePoint()
+			.domain(  d3.map(dataset, function(d){return d.age;}).keys().map( function(d){return d.replace("Years", "yr") } ).reverse()   )
+			.range([0,sizeChart.ht]);
+	
+		//console.log(yscale("10 - 14 Years"));
+		d3.select(".chartRight").append("g").attr("class", "xaxisRight").attr("transform", "translate(0," + sizeChart.ht +")").style("font-size", 10)
+			.call( d3.axisBottom(xscaleR).ticks(2) );
+
+		d3.select(".chartLeft").append("g").attr("class", "xaxisLeft").style("font-size", 10).attr("transform", "translate(0," + sizeChart.ht +")")
+			.call( d3.axisBottom(xscaleL).ticks(3)  );
+
+		d3.select(".chartRight").append("g").attr("class", "yaxis").attr("transform", "translate(0,0)").style("font-size", 10)
+			.call( d3.axisLeft(yscale).tickSize(0)  );
+
+		dataset_nested = d3.nest()
+			.key( function(d){return d.age;} )
+			.entries(dataset);
+		console.log(dataset_nested);
+
+
+		chartLeft.append("text").attr("class", "yearname").attr("transform", "translate(280,460)").text("1960");
+		chartLeft.append("text").attr("class", "sex").attr("transform", "translate(50,0)").text("Female");
+		chartRight.append("text").attr("class", "sex").attr("transform", "translate(130,0)").text("Male");
+		//chartRight.append("line").attr("x1",0).attr("y1", 0).attr("x2", sizeChart.wt - 20).attr("y2", sizeChart.ht).style("stroke", "#000").style("stroke-width", "0.02em").style("stroke-dasharray", "5,5");
+		chartRight.append("polygon").attr("points", "0,0 0," + sizeChart.ht + " " + sizeChart.wt + "," + sizeChart.ht);
+		chartRight.append("polygon").attr("points", "0,0 0," + sizeChart.ht + " " + sizeChart.wt/2 + "," + sizeChart.ht);
+		chartLeft.append("polygon").attr("points", "0," + sizeChart.ht + " " + sizeChart.wt + "," + sizeChart.ht + " " + sizeChart.wt + ",0");
+		chartLeft.append("polygon").attr("points", + sizeChart.wt/2 + "," + sizeChart.ht + " " + sizeChart.wt + "," + sizeChart.ht + " " + sizeChart.wt + ",0");
+			
+			
+		function render(each)
+		{	// -------------------------------
+			// Male
+			// -------------------------------
+			d3.select(".yearname").text(each);
+			
+			line = d3.line()
+				.x(function(d){
+					return xscaleR(	d.values.filter(   function(d1){ return d1.year==each?  (d1.resident=="Total Male Residents"? true: false) : false   }   )
+								[0].population )
+				})
+				.y( function(d){ return yscale(d.key.replace("Years", "yr")) } )
+				;	
+			
+			chartRight.append("path")
+				.attr("class", "lineR")	
+				.attr("d", line(dataset_nested))
+				;
+			// -------------------------------
+			// Female
+			// -------------------------------
+			line = d3.line()
+				.x(function(d){
+					return xscaleL(	d.values.filter(   function(d1){ return d1.year==each?  (d1.resident=="Total Female Residents"? true: false) : false   }   )
+								[0].population )
+				})
+				.y( function(d){ return yscale(d.key.replace("Years", "yr")) } )
+				;	
+			
+			chartLeft.append("path")
+				.attr("class", "lineL")	
+				.attr("d", line(dataset_nested))
+				;
+			
+			
+
+
+
+
+}	//end of render()
+		
+		var years = d3.map(dataset, function(d){ return d.year }).keys();
+		console.log(years.length);
+		
+		var cnt = 0;
+		
+		function call_render(){
+			if (cnt == 0){ d3.selectAll(".lineR").remove();d3.selectAll(".lineL").remove(); }
+			render(years[cnt])
+			cnt = (cnt == years.length -1)?  0 : cnt+1  ;
+		}
+		
+		var timerID = setInterval(call_render, 500);
+		//render("1960");
+	
+	
+	
+	
+	} ); // end of open csv
+
+
+	
+	</script>
+
+
+	<!--  Body text goes here -->
+	<!--  Body text goes here -->
+
+	<br>
+
+<div class="content2"></div>
+
+<div class="footer">
+<p style="text-decoration:underline">Conditions of use:</p>
+ Datasets downloaded from https://data.gov.sg/dataset on Nov 2016.
+<br>
+ Any analysis or transformation of data made here shall not be attributed to the Singapore Government or its Statutory Boards.
+ <br> 
+The datasets provided by the Singapore Government and its Statutory Boards via Data.gov.sg are governed by the Terms of Use available at https://data.gov.sg/site-terms. 
+To the fullest extent permitted by law, the Singapore Government and its Statutory Boards are not liable for any damage or loss of any kind caused directly 
+or indirectly by the use of the datasets or any derived analyses or applications.
+</div>
+
+  </body>
+</html>
