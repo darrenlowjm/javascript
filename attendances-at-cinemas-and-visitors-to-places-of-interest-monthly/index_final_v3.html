@@ -1,0 +1,295 @@
+<html>
+<head>
+    <title>D3 Example</title>
+    <script type="text/javascript" src="//localhost:8000/d3/d3.js"></script> 
+    <style>
+	.axis {
+		shape-rendering: crispEdges;
+	}
+	svg {
+		
+		
+		/*background: gainsboro;*/
+	}
+	rect {
+		stroke-width : 0.008em;
+		stroke : black;
+	}
+	rect:hover {
+		stroke-width : 0.1em;
+		stroke : black;
+	}
+	div.heading {
+		font-size: 2.5em;
+		font-family: "Times New Roman";	
+		width:1300px; 
+		text-align:center;
+		margin:auto; 
+	}
+	div.content {
+		margin:auto; 
+		width:1150px; 
+		text-align:center;
+		border: 1px solid black; 	
+		padding: 1em;
+		height: 700px;
+		
+	}
+	div.chart {
+		
+		margin:0; 
+		width:900px; 
+		text-align:center;
+	}
+	div.menu {
+		margin:0; 
+		width:400px; 
+		float:left;
+		text-align:left;
+	}
+	div.content2 {
+		margin:auto; 
+		width:1300px; 
+		clear:left;
+		text-align:center;
+	}
+	div.footer {
+		margin:auto; 
+		width:1300px; 
+		clear:left;
+		text-align:center;
+		font-size: 0.8em
+	}
+	code {
+		color: blue;
+	}
+	body {
+		font-size: 1.15em;
+		font-family: "Times New Roman";			
+	}	
+	a {
+		text-decoration: underline;
+		color: blue;
+	}
+	.labels {
+		font-size: 0.8em;
+		font-family: serif;
+		fill: #33cc33;
+	}
+
+    </style>
+</head>
+ <body>
+ 
+	<div class='heading'>
+	Heat chart showing monthly visitor count to tourist attractions in Singapore
+	</div>
+	
+	<div class='heading' id='location_title'>	
+	</div>
+	
+	<br>
+	<div class="content">
+		<div class="chart"></div>
+
+	</div>
+	<br>
+ 
+ 
+	<script>
+	// -----------------------------------------------------------------------------
+	// User defined constants
+	// -----------------------------------------------------------------------------
+	var csvfile = "attendances-at-cinemas-and-visitors-to-places-of-interest-monthly.csv";
+	//var csvfile = "iris.data";
+	//
+	var sizeSvg 			= { wt:1200, ht:800 };
+	var sizeChartG		= { wt:1200, ht:740 };		
+	var sizeEachlocationG 	= { wt:150, ht:10 };	
+	
+	var numCols = 12 ;		// 12 months
+	var widthRect = 15;
+	var hpadding = 0;
+	
+	//
+	// calculated based on above settings
+	var margin 	= { 
+		left:400 , 
+		top: (sizeSvg.ht - sizeChartG.ht)/2 
+	};	
+
+	
+	// create the svg element <svg><g>
+	 var svg = d3.select("div.chart").append("svg")
+		.attr( "width",  sizeSvg.wt )
+		.attr( "height",  sizeSvg.ht ) ;
+		
+	svg.append("text").attr("class", "information").attr("x", 0).attr("y", 20).text("* move cursor over square to view details");
+	
+	function preformat(d){		
+		// date, location, value, year, month
+		if( Number.isFinite(+d.value)  == false ){
+			return null;
+			}
+		
+		d.value = Number.isFinite(+d.value)  ? +d.value : "missing" ;		
+		d.year = d.date.split("-")[ 0 ];		
+		var temp = new Date(d.date);  d.month = temp.toString().split(" ")[ 1 ];
+		return d;		
+	}	
+	
+	var chartG = svg.append("g").attr("class", "chartG").attr( "transform", "translate(50,50)" );	
+
+	
+	
+	// --------------------------------------------------------------------------------------
+	// main()
+	// --------------------------------------------------------------------------------------
+	function render(){
+	
+	
+	var xscale = d3.scaleBand()
+		//.domain( d3.map(dataset_fil, function(d){return d.month} ).keys() )
+		.domain( [ "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" ] )
+		//.domain( [ "J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D" ] )
+		.range( [ 0, sizeEachlocationG.wt ] ) ;
+	
+	
+		d3.csv( csvfile, preformat, function (dataset) {		
+			//
+			arr_of_location = d3.map( dataset, function(d){ return d.location;  }).keys();
+			//
+			arr_of_location.forEach( function(eachlocation, index){
+				//
+				var cols = 6;
+				var translateX = (index%cols) *(sizeEachlocationG.wt + 30);
+				var translateY = 50 + Math.floor( index / cols ) * 350;
+				
+				var eachlocationG = chartG.append("g").attr( "transform", "translate(" + translateX + "," + translateY + ")"  );
+				
+				eachlocationG.append("g").style("font-size", "6").call( d3.axisTop( xscale ) );
+
+				chartG.append("text").text(eachlocation).style("font-size", "0.75em").attr("x", translateX).attr("y",translateY - 25);
+
+				dataset_fil_by_location = dataset.filter( function(d){ return  d.location == eachlocation ? true : false } );
+
+				arr_of_years = d3.map( dataset_fil_by_location, function(d){ return d.year } ).keys();
+			
+				arr_of_years.forEach( function(year, index){
+					dataset_fil_by_location_by_year = dataset_fil_by_location.filter( function(d){ return  d.year == year ? true : false } );
+					
+					//var location = dataset_fil_by_location_by_year[ 0 ].location ;
+				
+					var eachYearG = eachlocationG.append("g").attr( "transform", "translate(0," + (index*sizeEachlocationG.ht +1)  + ")"    )
+						.attr("class", function(d){ return eachlocation.replace(/ /g, "") + year }) ;
+						
+					//var extent_value = d3.extent( dataset_fil_by_location_by_year, function(d){ return d.value } );
+					var extent_value = d3.extent( dataset_fil_by_location, function(d){ return d.value } );
+					
+					
+					//~ eachYearG.append("g")
+						//~ .call( d3.axisLeft( yscale ).ticks(1) );
+
+					var ColorLscale = d3.scaleLinear()
+						.domain( extent_value )				
+						.range([80,10])
+						//.range(["white","red"])
+						//.interpolate(d3.interpolateHcl)				
+						;
+						
+					var ColorSequential = 
+						//d3.scaleSequential( d3.interpolateInferno )	
+						d3.scaleSequential( d3.interpolatePlasma )	
+						//d3.scaleSequential( d3.interpolateRainbow )	
+						//d3.scaleSequential( d3.interpolateViridis )	
+						//d3.scaleSequential( d3.interpolateCubehelixDefault )	
+						.domain( [extent_value[1],  extent_value[0] ] );
+
+					var Brighterscale = d3.scaleLinear()
+						.domain( extent_value )
+						.range([0.7,0]);
+						
+					var Darkerscale = d3.scaleLinear()
+						.domain( extent_value )
+						.range([-1,1]);
+
+					var colorHue = 204;
+
+					//
+					eachYearG.selectAll(".rect").data( dataset_fil_by_location_by_year )
+						.enter()
+						.append("rect")
+						.attr("x", function(d){ return xscale(d.month)} )
+						//.attr("y", function(d){ return yscale(d.value)} )
+						.attr("y", 0 )
+						.attr("width", xscale.bandwidth())
+						//.attr("height", function(d){ return sizeEachlocationG.ht - yscale(d.value)  })
+						.attr("height", sizeEachlocationG.ht )
+						//.style("fill", function (d){ return d3.color( "hsl(" + colorHue +",100%," + ColorLscale(d.value) + "%)"  ).darker(Darkerscale(d.value))  
+						//.style("fill", function (d){ return d3.color( "hsl(" + colorHue +",100%," + ColorLscale(d.value) + "%)"  ).brighter(Brighterscale(d.value))  
+						//.style("fill", function (d){ return d3.color( "hsl(" + colorHue +",100%," + ColorLscale(d.value) + "%)"  )
+						//.style("fill", function(d){return ColorLscale(d.value)
+						//.style("fill", function(d){return ColorSequential(d.value)
+						.style("fill", function(d){return ColorSequential(d.value)
+						})
+						.on("mouseover", function(d){
+								svg.select(".information").text( "" );
+								svg.select(".information").text(  d.location + ":  " + d.month + " " + d.year + " - " + d3.format(",d")(1000*d.value) + " visitors" );
+							}					
+						)
+						
+				
+				
+					eachYearG.append("text").attr("class", "year_label").text(year).attr("y", 8).attr("x", -20).style("font-size", "0.45em");
+					//eachYearG.append("path").attr("x",-5).attr("y",0).attr("width", sizeEachlocationG.wt).attr("height",sizeEachlocationG.ht ).style("fill", "white").style("fill-opacity", 0.1).style("stroke", "black").style("stroke-opacity", 0.1);
+					//eachYearG.append("line").attr("x1", 0).attr("y1",sizeEachlocationG.ht).attr("x2", sizeEachlocationG.wt).attr("y2", sizeEachlocationG.ht).style("stroke", "black").style("stroke-width", "0.005em").style("stroke-opacity", 0.8).style("stroke-dasharray", "5,5");
+				
+				} ); // end of forEach()	year loop
+			} ); // end of forEach()  location loop 		
+			
+			
+			
+			
+			
+			
+			
+			
+		});
+	}; // end of render()	
+
+	
+	
+	
+	render();
+	//render("National Museum Of Singapore");
+	
+	function checkthis(){
+		var name = document.getElementsByName("location_radio");
+		var i;
+		for( i=0; i<name.length; i++){
+			if (name[i].checked){ render( name[i].value ); break;}
+		}
+	}
+	
+	</script>
+
+
+
+<div class="content2">
+</div>
+
+<div class="footer">
+<p style="text-decoration:underline">Conditions of use:</p>
+ Datasets downloaded from https://data.gov.sg/dataset/attendances-at-cinemas-and-visitors-to-places-of-interest-monthly on Oct 2016.
+<br>
+ Any analysis or transformation of data made here shall not be attributed to the Singapore Government or its Statutory Boards.
+ <br> 
+The datasets provided by the Singapore Government and its Statutory Boards via Data.gov.sg are governed by the Terms of Use available at https://data.gov.sg/site-terms. 
+To the fullest extent permitted by law, the Singapore Government and its Statutory Boards are not liable for any damage or loss of any kind caused directly 
+or indirectly by the use of the datasets or any derived analyses or applications.
+</div>
+
+
+
+  </body>
+</html>

@@ -1,0 +1,52 @@
+# Metadata for Attendances at Cinemas and Visitors to Places of Interest, Monthly
+---
+Identifier: 'fb7fcf9f-be61-495f-91c3-adfff583c28f'
+Name: 'attendances-at-cinemas-and-visitors-to-places-of-interest-monthly'
+Title: 'Attendances at Cinemas and Visitors to Places of Interest, Monthly'
+Description: 'Attendances at cinemas refer to the total number of tickets sold by
+  the cinemas in each reference point.'
+Topics:
+  - 'Society'
+Keywords:
+  - 'Attendance'
+  - 'Cinema'
+  - 'Places of Interest'
+  - 'Visitors'
+Publisher:
+  Name: 'Ministry of Trade and Industry - Department of Statistics'
+Sources:
+  - 'Ministry of Trade and Industry - Department of Statistics'
+Source Url: 'http://www.tablebuilder.singstat.gov.sg/publicfacing/createDataTable.action?refId=2000&exportType=csv'
+License: 'https://data.gov.sg/terms'
+Frequency: 'Monthly'
+Coverage: '1990-04-01 to 2016-04-30'
+Last Updated: '2016-10-09T11:27:59.400384'
+Resources:
+  -
+    Identifier: '583792d9-f629-477c-9313-6659cca65cdb'
+    Name: 'attendances-at-cinemas-and-visitors-to-places-of-interest-monthly.csv'
+    Title: 'Attendances At Cinemas And Visitors To Places Of Interest, Monthly'
+    Url: 'https://data.gov.sg/dataset/fb7fcf9f-be61-495f-91c3-adfff583c28f/resource/583792d9-f629-477c-9313-6659cca65cdb/download/attendances-at-cinemas-and-visitors-to-places-of-interest-monthly.csv'
+    Format: 'CSV'
+    Coverage: '1990-04-01 to 2016-04-30'
+    Description: 'Statistics on the total number of cinema attandances'
+    Last Updated: '2016-06-01T04:00:37.238032'
+    Schema:
+      -
+        Name: 'month'
+        Title: 'Month'
+        Type: 'datetime'
+        Sub Type: 'month'
+        Format: 'YYYY-MM'
+      -
+        Name: 'level_1'
+        Title: 'Cinemas or Place of Interest'
+        Type: 'text'
+        Sub Type: 'general'
+      -
+        Name: 'value'
+        Title: 'Number of Visits'
+        Type: 'numeric'
+        Sub Type: 'general'
+        Unit Of Measure: 'Number of Visits'
+        Description: '"na" : Data not available or not applicable'

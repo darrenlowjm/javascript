@@ -1,0 +1,157 @@
+<html>
+<head>
+    <title>D3 Example</title>
+    <script type="text/javascript" src="//localhost:8000/d3/d3.js"></script> 
+    <style>
+	.axis {
+		shape-rendering: crispEdges;
+	}
+	svg {
+		border-style: solid; 	
+		border-width: 2px;
+	}
+	rect {
+		stroke-width : 0.01em;
+		stroke : black;
+	}
+	.heading {
+		font-size: 2.5em;
+		font-family: "Times New Roman";	
+	}
+	code {
+		color: blue;
+	}
+	body {
+		font-size: 1.15em;
+		font-family: "Times New Roman";			
+	}	
+	a {
+		text-decoration: underline;
+		color: blue;
+	}
+	.labels {
+		font-size: 0.8em;
+		font-family: serif;
+		fill: #33cc33;
+	}
+
+
+    </style>
+</head>
+ <body>
+	<script>
+	// -----------------------------------------------------------------------------
+	// User defined constants
+	// -----------------------------------------------------------------------------
+	var csvfile = "attendances-at-cinemas-and-visitors-to-places-of-interest-monthly.csv";
+	//var csvfile = "iris.data";
+	//
+	var sizeSvg 			= { wt:1000, ht:1000 };
+	var sizeChartG		= { wt:800, ht:800 };		
+	var sizeEachlocationG 	= { wt:600, ht:100 };	
+	
+	var numCols = 12 ;		// 12 months
+	var widthRect = 40;
+	var hpadding = 1;
+	
+	//
+	// calculated based on above settings
+	var margin 	= { 
+		left: (sizeSvg.wt - sizeChartG.wt)/2 , 
+		top: (sizeSvg.ht - sizeChartG.ht)/2 
+	};	
+
+	
+	// create the svg element <svg><g>
+	 var svg = d3.select("body").append("svg")
+		.attr( "width",  sizeSvg.wt )
+		.attr( "height",  sizeSvg.ht ) ;
+		
+	var chartG = svg.append("g").attr("class", "chartG").attr( "transform", "translate(" + margin.left + "," + margin.top + ")" );	
+	
+	function preformat(d){		
+		// date, location, value, year, month
+		d.value = Number.isFinite(+d.value)  ? +d.value : "missing" ;		
+		d.year = d.date.split("-")[ 0 ];		
+		var temp = new Date(d.date);  d.month = temp.toString().split(" ")[ 1 ];
+		return d;		
+	}	
+	// --------------------------------------------------------------------------------------
+	// main()
+	// --------------------------------------------------------------------------------------
+	d3.csv( csvfile, preformat, function (dataset) {
+		var eachlocationG = chartG.append("g").attr("class", "eachlocationG").attr( "transform", "translate(0,0)"  );
+
+		dataset_fil = dataset.filter( function(d){ return  d.location == "Singapore Zoological Gardens" ? true : false } );
+		dataset_fil = dataset_fil.filter( function(d){ return  d.year == "1990" ? true : false } );
+		//console.log(dataset_fil);
+		
+		var xscale = d3.scaleBand()
+			//.domain( d3.map(dataset_fil, function(d){return d.month} ).keys() )
+			.domain( [ "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" ] )
+			.range( [ 0, sizeEachlocationG.wt ] ) ;
+		
+		
+		var yscale = d3.scaleLinear()
+			.domain(  d3.extent( dataset_fil, function(d){ return d.value } )  )
+			.range([ sizeEachlocationG.ht -10, 0]);
+
+		var ColorLscale = d3.scaleLinear()
+			.domain( d3.extent(dataset_fil, function(d){ return d.value}) )
+			.range([80,15]);
+			
+		var Brighterscale = d3.scaleLinear()
+			.domain( d3.extent(dataset_fil, function(d){ return d.value}) )
+			.range([0.7,0]);
+			
+		var Darkerscale = d3.scaleLinear()
+			.domain( d3.extent(dataset_fil, function(d){ return d.value}) )
+			.range([0,2]);
+
+		var colorHue = 315;
+
+		eachlocationG.append("g").attr( "transform", "translate(0,0)" )
+			.call( d3.axisLeft( yscale ).ticks(5) );
+			
+		//var xAxis = d3.axisBottom( xscale );		
+		eachlocationG.append("g").attr( "transform", "translate(0,0)" )
+			.call( d3.axisBottom( xscale ) );
+		
+		eachlocationG.selectAll(".rect").data( dataset_fil )
+			.enter()
+			.append("rect")
+			.attr("x", function(d){ return xscale(d.month)} )
+			.attr("y", function(d){ return yscale(d.value)} )
+			.attr("width", xscale.bandwidth())
+			.attr("height", function(d){ return sizeEachlocationG.ht - yscale(d.value)  })
+			//.style("fill", function (d){ return d3.color( "hsl(" + colorHue +",100%," + ColorLscale(d.value) + "%)"  ).darker(Darkerscale(d.value))  
+			.style("fill", function (d){ return d3.color( "hsl(" + colorHue +",100%," + ColorLscale(d.value) + "%)"  ).brighter(Brighterscale(d.value))  
+			//.style("fill", function (d){ return d3.color( "hsl(" + colorHue +",100%," + ColorLscale(d.value) + "%)"  )
+			} )
+			;
+
+		
+
+			
+		
+	
+	} );// end of .csv()
+		
+	// create x axis scale
+	
+	
+	// create y axis scale
+		
+
+	
+	
+	
+	
+	// create the chart
+
+	
+	</script>
+
+
+  </body>
+</html>

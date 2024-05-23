@@ -1,0 +1,341 @@
+<html>
+<head>
+    <title>D3 Example</title>
+    <script type="text/javascript" src="//localhost:8000/d3/d3.js"></script> 
+    <style>
+	.axis {
+		shape-rendering: crispEdges;
+	}
+	svg {
+		border-style: solid; 	
+		border-width: 2px;
+		/*background: gainsboro;*/
+	}
+	circle {
+		stroke-width : 0.03em;
+		stroke : black;
+	}
+	circle:hover {
+		stroke-width : 0.5em;
+		stroke : red;
+		
+	}
+	div {
+		margin:auto; 
+		width:1200px; 
+		text-align:center
+
+	}
+	.heading {
+		font-size: 2.5em;
+		font-family: "Times New Roman";	
+	}
+	code {
+		color: blue;
+	}
+	body {
+		font-size: 1.15em;
+		font-family: "Times New Roman";			
+	}	
+	a {
+		text-decoration: underline;
+		color: blue;
+	}
+	.labels {
+		font-size: 0.8em;
+		font-family: serif;
+		fill: #33cc33;
+	}
+
+    </style>
+</head>
+ <body>
+ 
+	<div class='heading'>
+	Monthly Visitor count to places of interest in Singapore
+	</div>
+	<div class='heading' id='location_title'>	
+	</div>
+	
+	<br>
+
+ 
+ 
+	<script>
+	// -----------------------------------------------------------------------------
+	// User defined constants
+	// -----------------------------------------------------------------------------
+	var csvfile = "attendances-at-cinemas-and-visitors-to-places-of-interest-monthly.csv";
+	//var csvfile = "iris.data";
+	//
+	var sizeSvg 			= { wt:1200, ht:800 };
+	var sizeChartG		= { wt:400, ht:740 };		
+	var sizeEachlocationG 	= { wt:400, ht:28 };	
+	
+	var numCols = 12 ;		// 12 months
+	var widthRect = 15;
+	var hpadding = 0;
+	
+	//
+	// calculated based on above settings
+	var margin 	= { 
+		left: (sizeSvg.wt - sizeChartG.wt)/2 , 
+		top: (sizeSvg.ht - sizeChartG.ht)/2 
+	};	
+
+	
+	// create the svg element <svg><g>
+	 var svg = d3.select("body").append("div")//.style("float","left")
+	 .append("svg")
+		.attr( "width",  sizeSvg.wt )
+		.attr( "height",  sizeSvg.ht ) ;
+		
+	svg.append("text").attr("x", 25).attr("y", 50).attr("class", "title").style("font-size", "2em").style("text-decoration", "underline").text("Monthly information");
+	svg.append("text").attr("x", 25).attr("y", 100).attr("class", "info_month").style("font-size", "2em");
+	svg.append("text").attr("x", 25).attr("y", 150).attr("class", "info_value").style("font-size", "2em");
+	
+	svg.append("text").attr("x", 25).attr("y", 700).style("font-size", "0.9em").text( "* The size of each circle depict a visual" );  //"   ");
+	svg.append("text").attr("x", 25).attr("y", 720).style("font-size", "0.9em").text( "representation of the visitor count for each" ); 
+	svg.append("text").attr("x", 25).attr("y", 740).style("font-size", "0.9em").text( "month. Crowded months are seen as bigger" ); 
+	svg.append("text").attr("x", 25).attr("y", 760).style("font-size", "0.9em").text( "and darker circles." ); 
+	
+	var chartG = svg.append("g").attr("class", "chartG").attr( "transform", "translate(" + margin.left + "," + margin.top + ")" );	
+	
+	function preformat(d){		
+		// date, location, value, year, month
+		if( Number.isFinite(+d.value)  == false ){
+			return null;
+			}
+		
+		d.value = Number.isFinite(+d.value)  ? +d.value : "missing" ;		
+		d.year = d.date.split("-")[ 0 ];		
+		var temp = new Date(d.date);  d.month = temp.toString().split(" ")[ 1 ];
+		return d;		
+	}	
+	
+	var xscale = d3.scalePoint()
+		//.domain( d3.map(dataset_fil, function(d){return d.month} ).keys() )
+		.domain( [ "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" ] )
+		.range( [ 0, sizeEachlocationG.wt ] ) ;
+	
+	var eachlocationG = chartG.append("g").attr( "transform", "translate(0,0)" );
+	
+	eachlocationG.append("g").call( d3.axisTop( xscale ).ticks(5) );
+
+	
+	
+	// --------------------------------------------------------------------------------------
+	// main()
+	// --------------------------------------------------------------------------------------
+	function render(location){
+	
+		d3.selectAll("circle").remove();
+		d3.selectAll(".year_label").remove();
+	
+		d3.csv( csvfile, preformat, function (dataset) {		
+
+			document.getElementById("location_title").innerHTML = location;
+			
+			dataset_fil_by_location = dataset.filter( function(d){ return  d.location == location ? true : false } );
+			
+			var arrMeanOfMonth = [];
+			
+			xscale.domain().forEach( function(month){
+							var obj = {};
+							obj.month = month;
+							obj.mean = d3.mean( dataset_fil_by_location, function(d){ 
+										return   d.month == month ?  d.value  : NaN  }   );
+							
+							arrMeanOfMonth.push( obj );
+						}			
+			);
+			
+			
+			arrMeanOfMonth.sort(  function(a,b){ return a.mean - b.mean }  )	//ascending according to mean
+			
+			console.log(arrMeanOfMonth);
+			
+			d3.select(".low1").text( arrMeanOfMonth[0].month );
+			d3.select(".low2").text( arrMeanOfMonth[1].month );
+			d3.select(".low3").text( arrMeanOfMonth[2].month );
+			
+			d3.select(".peak1").text( arrMeanOfMonth[arrMeanOfMonth.length-1].month );
+			d3.select(".peak2").text( arrMeanOfMonth[arrMeanOfMonth.length-2].month );
+			d3.select(".peak3").text( arrMeanOfMonth[arrMeanOfMonth.length-3].month );
+			
+			d3.select(".location_location").text( "  \"" + location + "\""  );
+
+			
+			
+			arr_of_years = d3.map( dataset_fil_by_location, function(d){ return d.year } ).keys();
+			
+			arr_of_years.forEach( function(year, index){
+			
+				dataset_fil_by_location_by_year = dataset_fil_by_location.filter( function(d){ return  d.year == year ? true : false } );
+				
+				var location = dataset_fil_by_location_by_year[ 0 ].location ;
+			
+				var eachYearG = eachlocationG.append("g").attr( "transform", "translate(0," + (index*sizeEachlocationG.ht +0)  + ")"    )
+					.attr("class", function(d){ return location.replace(/ /g, "") + year }) ;
+					
+				var extent_value = d3.extent( dataset_fil_by_location_by_year, function(d){ return d.value } );
+				//var extent_value = d3.extent( dataset_fil_by_location, function(d){ return d.value } );
+				
+				var rscale = d3.scaleLinear()
+					.domain(  extent_value  )
+					.range([ 4, sizeEachlocationG.ht/2 -1]);
+				
+				//~ eachYearG.append("g")
+					//~ .call( d3.axisLeft( yscale ).ticks(1) );
+
+				var ColorLscale = d3.scaleLinear()
+					.domain( extent_value )				
+					.range([80,10])
+					//.range(["white","red"])
+					//.interpolate(d3.interpolateHcl)				
+					;
+				
+				var Brighterscale = d3.scaleLinear()
+					.domain( extent_value )
+					.range([0.7,0]);
+					
+				var Darkerscale = d3.scaleLinear()
+					.domain( extent_value )
+					.range([-1,1]);
+
+				var colorHue = 204;
+
+				//
+				//
+				//
+				svg.select(".info_month").text( "" );
+				svg.select(".info_value").text( "" );	
+				//
+				eachYearG.selectAll(".rect").data( dataset_fil_by_location_by_year )
+					.enter()
+					.append("circle")
+					.attr("cx", function(d){ return xscale(d.month)} )
+					//.attr("cy",  sizeEachlocationG.ht/2 )
+					.attr("cy", function(d){ return sizeEachlocationG.ht - rscale(d.value) } )
+					//.attr("width", xscale.bandwidth())
+					//.attr("height", function(d){ return sizeEachlocationG.ht - yscale(d.value)  })
+					//.attr("r", 0)
+					.attr("r", function(d){ return rscale(d.value)  })
+					//.attr("height", sizeEachlocationG.ht )
+					//.style("fill", function (d){ return d3.color( "hsl(" + colorHue +",100%," + ColorLscale(d.value) + "%)"  ).darker(Darkerscale(d.value))  
+					//.style("fill", function (d){ return d3.color( "hsl(" + colorHue +",100%," + ColorLscale(d.value) + "%)"  ).brighter(Brighterscale(d.value))  
+					//.style("fill", function (d){ return d3.color( "hsl(" + colorHue +",100%," + ColorLscale(d.value) + "%)"  )
+					//.style("fill", function(d){return ColorLscale(d.value)
+					.style("fill", "#FFF")
+					.on("mouseover", function(d){
+							svg.select(".info_month").text( "" );
+							svg.select(".info_value").text( "" );					
+							svg.select(".info_month").text( d.month + " " + d.year );
+							svg.select(".info_value").text(  d3.format(",d")(1000*d.value) + " visitors"  );					
+						}					
+					)
+					
+					.transition()
+						.delay(function(d){ return rscale(d.value) > 0.8*rscale.range()[1]  ?  1000 : 4000  }
+						)
+						.duration(2000).ease(d3.easeLinear)
+						//.attr("r", function(d){ return rscale(d.value)  })
+						.style("fill", function (d){ return d3.color( "hsl(" + colorHue +",100%," + ColorLscale(d.value) + "%)"  ).darker(Darkerscale(d.value))  })
+						
+					;
+			
+			
+				eachYearG.append("text").attr("class", "year_label").text(year).attr("y", 23).attr("x", -40).style("font-size", "0.65em");
+				//eachYearG.append("path").attr("x",-5).attr("y",0).attr("width", sizeEachlocationG.wt).attr("height",sizeEachlocationG.ht ).style("fill", "white").style("fill-opacity", 0.1).style("stroke", "black").style("stroke-opacity", 0.1);
+				eachYearG.append("line").attr("x1", 0).attr("y1",sizeEachlocationG.ht).attr("x2", sizeEachlocationG.wt).attr("y2", sizeEachlocationG.ht).style("stroke", "black").style("stroke-width", "0.005em").style("stroke-opacity", 0.8).style("stroke-dasharray", "5,5");
+			
+			} ); // end of forEach() loop
+			
+		});
+	}; // end of render()	
+
+	
+	
+	
+	render("Singapore Zoological Gardens");
+	//render("National Museum Of Singapore");
+	
+	function checkthis(){
+		var name = document.getElementsByName("location_radio");
+		var i;
+		for( i=0; i<name.length; i++){
+			if (name[i].checked){ render( name[i].value ); break;}
+		}
+	}
+	
+	</script>
+
+<div class="body">
+Select your place of interest: <p>
+<input type="radio" name="location_radio" value="Singapore Zoological Gardens" checked onclick="checkthis()"> Singapore Zoological Gardens 
+<input type="radio" name="location_radio" value="Science Centre Singapore" onclick="checkthis()"> Science Centre Singapore 
+<input type="radio" name="location_radio" value="Jurong Birdpark"onclick="checkthis()">  Jurong Birdpark 
+<input type="radio" name="location_radio" value="The Peranakan Museum"onclick="checkthis()"> The Peranakan Museum 
+<input type="radio" name="location_radio" value="Singapore Art Museum"onclick="checkthis()"> Singapore Art Museum 
+<br>
+<input type="radio" name="location_radio" value="Asian Civilisations Museum"onclick="checkthis()"> Asian Civilisations Museum
+<input type="radio" name="location_radio" value="Night Safari"onclick="checkthis()"> Night Safari 
+<input type="radio" name="location_radio" value="River Safari"onclick="checkthis()"> River Safari 
+<input type="radio" name="location_radio" value="National Museum Of Singapore"onclick="checkthis()"> National Museum Of Singapore 
+<input type="radio" name="location_radio" value="Chinese/japanese Gardens"onclick="checkthis()"> Chinese/japanese Gardens 
+<input type="radio" name="location_radio" value="Singapore Philatelic Museum"onclick="checkthis()"> Singapore Philatelic Museum 
+
+</div>
+
+<br>
+
+<div>
+<svg width=1200 height=300 style="border-width:0px;">
+
+<rect rx=20 ry=20 width=1200 height=280 x=0 y=0 style="fill:lightyellow; stroke-width:1px; stroke:black;" />
+
+
+<g transform="translate(50,30)">
+<text x=0 y=0 style="font-size:2em; text-decoration:underline">When is the best time for your events @ </text>
+<text class="location_location" x=600 y=0 style="font-size:2em; text-decoration:underline">@</text>
+
+<rect rx=20 ry=20 width=150 height=200 x=-10 y=15 style="fill:black;fill-opacity:0.7" />
+<text x=0 y=50 style="font-size:1.5em; text-decoration:underline">Peak season </text>
+<text class="peak1" x=20 y=100  style="font-size:2em;fill:yellowgreen">-</text>
+<text class="peak2" x=20 y=150 style="font-size:2em;fill:yellowgreen ">-</text>
+<text class="peak3" x=20 y= 200 style="font-size:2em;fill:yellowgreen ">-</text>
+
+
+<rect rx=20 ry=20 width=150 height=200 x=190 y=15 style="fill:powderblue;fill-opacity:0.4 " />
+<text x=200 y=50 style="font-size:1.5em; text-decoration:underline">Low season </text>
+<text class="low1" x=220 y=100 style="font-size:2em;fill:coral ">-</text>
+<text class="low2" x=220 y=150 style="font-size:2em; fill:coral">-</text>
+<text class="low3" x=220 y= 200 style="font-size:2em; fill:coral">-</text>
+
+<text x=500 y=60 style="font-size:1.2em">...Bringing your family there?</text>
+<text x=600 y=85 style="font-size:1.2em">...Stationing your ice cream van there?</text>
+<text x=700 y=110 style="font-size:1.2em">...Planning ticket pricing?</text>
+<text x=800 y=135 style="font-size:1.2em">...Organising an event there?</text>
+<text x=700 y=160 style="font-size:1.2em">...Starting an advertising promotion?</text>
+<text x=600 y=185 style="font-size:1.2em">...Taxi driver picking up passengers?</text>
+<text x=500 y=210 style="font-size:1.2em">...Planning resources for crowd management?</text>
+</g>
+
+</svg>
+</div>
+
+<div style="font-size:0.8em">
+<div style="text-decoration:underline">Conditions of use:</div>
+ Datasets downloaded from https://data.gov.sg/dataset/attendances-at-cinemas-and-visitors-to-places-of-interest-monthly on Oct 2016.
+<br>
+ Any analysis or transformation of data made here shall not be attributed to the Singapore Government or its Statutory Boards.
+ <br> 
+The datasets provided by the Singapore Government and its Statutory Boards via Data.gov.sg are governed by the Terms of Use available at https://data.gov.sg/site-terms. 
+To the fullest extent permitted by law, the Singapore Government and its Statutory Boards are not liable for any damage or loss of any kind caused directly 
+or indirectly by the use of the datasets or any derived analyses or applications.
+</div>
+
+
+
+  </body>
+</html>
